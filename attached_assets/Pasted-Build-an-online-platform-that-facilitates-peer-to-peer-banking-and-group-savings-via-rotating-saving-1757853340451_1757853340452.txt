@@ -1,0 +1,71 @@
+Build an online platform that facilitates peer-to-peer banking and group savings via rotating savings and credit management. A typical example is the ROSCA service. Users join groups where all members contribute a fixed amount regularly; at each interval, the collective sum goes to one member, rotating until every member has received the pooled fund once. The Target Users are Individuals who want to save for specific goals (e.g., tuition, business capital, travel, Users in communities/friends/networks seeking accountability in savings, alsoUnbanked and underbanked populations seeking access to credit
+
+
+
+Example of User Stories for functionality and features
+
+Group Creation and Management
+- As a user, I want to create a new savings group specifying target amount, group size, and contribution frequency.
+- As a user, I want to invite friends or connect with other members to join my savings group.
+
+Contributions and Disbursement
+- As a user, I want to contribute a fixed sum at defined intervals.
+- As a user, I want to receive the full pooled amount in my turn automatically.
+
+Transparency and Security
+- As a user, I want to see the contribution history of each member for transparency.
+- As a user, I want IMMEDIATE visibility of all financial transactions and receipts.
+
+Notifications
+- As a user, I want to be reminded of upcoming payment deadlines.
+- As a user, I want to be notified upon successful contribution and receipt of funds.
+
+Dispute Resolution
+- As a user, I want a way to flag missed payments or disputes within the group.
+
+Core Features
+
+1. User Registration & Verification
+- Email and mobile number sign-up
+- KYC (Know Your Customer) verification for trust and compliance
+
+2. Group Formation
+- Create and join private/public groups
+- Set customizable parameters (amount per cycle, group size, cycle frequency, start date)
+- Invitation system (via link, email, SMS)
+
+3. Escrow & Fund Management
+- Secure escrow holding of contributions until payout
+- Automated scheduled payouts to the designated member per cycle
+- Escrow refunds in event of group dissolution or fraud
+
+4. Contribution Mechanism
+- Multiple payment options (bank transfers, credit/debit card, wallets)
+- Recurring payments setup
+- Payment reconciliation and real-time updates
+
+5. Cycle Management
+- Rotational payout schedule automatically enforced
+- Visual timeline showing who receives when
+- Group progress tracker
+
+6. Notifications & Reminders
+- Contribution reminders (push, SMS, email)
+- Alerts for missed payments, successful contributions, and when it is your turn for payout
+
+7. Member Profiles & Trust Indicators
+- Public profiles (photo, name, trust score, contribution history)
+- Ratings and reviews after each cycle
+
+8. Dispute Resolution
+- In-app support for disputes or missed payments
+- Automated and manual intervention workflow
+
+9. Reporting & Insights
+- Downloadable individual and group transaction reports
+- Visualization of progress toward goals
+
+10. Platform Security
+- End-to-end encryption
+- Role-based access
+- Secure payment gateway integrations
