@@ -7,6 +7,7 @@ import { paymentService } from "./services/paymentService";
 import {
   sendGroupInvitationEmail,
   sendWelcomeEmail,
+  sendGroupCreatedEmail,
 } from "./services/emailService";
 import { insertGroupSchema, insertGroupMemberSchema } from "@shared/schema";
 import { z } from "zod";
@@ -62,6 +63,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         payoutOrder: 1,
       });
+
+      // Send group creation email notification
+      try {
+        const user = await storage.getUser(userId);
+        if (user?.email) {
+          await sendGroupCreatedEmail(
+            user.email,
+            user.firstName || user.lastName || "Member",
+            group.name,
+            requestData.contributionAmount,
+            requestData.frequency,
+            requestData.maxMembers
+          );
+        }
+      } catch (emailError) {
+        console.error("Failed to send group creation email:", emailError);
+        // Don't fail the group creation if email fails
+      }
 
       res.json(group);
     } catch (error) {
