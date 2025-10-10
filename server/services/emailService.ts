@@ -1,11 +1,21 @@
-import { MailService } from '@sendgrid/mail';
+import { MailService } from "@sendgrid/mail";
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email notifications will be disabled.");
+const isValidSendGridKey = (key: string) => key && key.startsWith("SG.");
+
+if (
+  !process.env.SENDGRID_API_KEY ||
+  !isValidSendGridKey(process.env.SENDGRID_API_KEY)
+) {
+  console.warn(
+    "SENDGRID_API_KEY environment variable not set or invalid. Email notifications will be disabled."
+  );
 }
 
 const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
+if (
+  process.env.SENDGRID_API_KEY &&
+  isValidSendGridKey(process.env.SENDGRID_API_KEY)
+) {
   mailService.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
@@ -18,8 +28,11 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log('Email would be sent:', params.subject, 'to', params.to);
+  if (
+    !process.env.SENDGRID_API_KEY ||
+    !isValidSendGridKey(process.env.SENDGRID_API_KEY)
+  ) {
+    console.log("Email would be sent:", params.subject, "to", params.to);
     return true; // Return true in development
   }
 
@@ -28,12 +41,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       to: params.to,
       from: params.from,
       subject: params.subject,
-      text: params.text,
+      text: params.text || "",
       html: params.html,
     });
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error("SendGrid email error:", error);
     return false;
   }
 }
@@ -62,7 +75,7 @@ export async function sendPaymentReminderEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || 'no-reply@circlesave.com',
+    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
@@ -92,7 +105,7 @@ export async function sendPayoutNotificationEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || 'no-reply@circlesave.com',
+    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
@@ -105,8 +118,10 @@ export async function sendGroupInvitationEmail(
   inviteCode: string
 ): Promise<boolean> {
   const subject = `You're invited to join ${groupName}`;
-  const inviteLink = `${process.env.BASE_URL || 'https://circlesave.com'}/groups/join/${inviteCode}`;
-  
+  const inviteLink = `${
+    process.env.BASE_URL || "https://circlesave.com"
+  }/groups/join/${inviteCode}`;
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #2563eb;">You're Invited to Join a Savings Group!</h2>
@@ -126,7 +141,7 @@ export async function sendGroupInvitationEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || 'no-reply@circlesave.com',
+    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
