@@ -82,7 +82,7 @@ export default function Dashboard() {
                   Welcome back, {userName}!
                 </h2>
                 <p className="text-white/90">
-                  You have {stats?.activeGroups || 0} active groups and ${stats?.totalSaved || 0} in contributions this month.
+                  You have {stats?.activeGroups || 0} active groups and £{stats?.totalSaved || 0} in contributions this month.
                 </p>
               </div>
               <Button 
@@ -123,7 +123,7 @@ export default function Dashboard() {
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Total Saved</p>
                     <p className="text-2xl font-bold" data-testid="text-total-saved">
-                      ${statsLoading ? '...' : stats?.totalSaved || 0}
+                      £{statsLoading ? '...' : stats?.totalSaved || 0}
                     </p>
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export default function Dashboard() {
                         <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs">Open</span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {group.memberCount}/{group.maxMembers} members • ${group.contributionAmount}/{group.frequency}
+                        {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency}
                       </p>
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">
@@ -311,7 +311,7 @@ export default function Dashboard() {
                         <p className={`text-sm font-medium ${
                           transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
                         }`}>
-                          {transaction.type === 'contribution' ? '-' : '+'}${transaction.amount}
+                          {transaction.type === 'contribution' ? '-' : '+'}£{transaction.amount}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(transaction.createdAt).toLocaleDateString()}

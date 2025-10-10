@@ -142,7 +142,7 @@ export default function Groups() {
                               {group.name}
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              {group.memberCount}/{group.maxMembers} members • ${group.contributionAmount}/{group.frequency}
+                              {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency}
                             </p>
                           </div>
                           <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">

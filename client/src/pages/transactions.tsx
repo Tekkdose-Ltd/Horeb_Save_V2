@@ -107,7 +107,7 @@ export default function Transactions() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Contributed</p>
                   <p className="text-2xl font-bold text-destructive" data-testid="text-total-contributed">
-                    ${totalContributed.toFixed(2)}
+                    £{totalContributed.toFixed(2)}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center">
@@ -123,7 +123,7 @@ export default function Transactions() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Received</p>
                   <p className="text-2xl font-bold text-secondary" data-testid="text-total-received">
-                    ${totalReceived.toFixed(2)}
+                    £{totalReceived.toFixed(2)}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
@@ -141,7 +141,7 @@ export default function Transactions() {
                   <p className={`text-2xl font-bold ${
                     totalReceived - totalContributed >= 0 ? 'text-secondary' : 'text-destructive'
                   }`} data-testid="text-net-amount">
-                    ${(totalReceived - totalContributed).toFixed(2)}
+                    £{(totalReceived - totalContributed).toFixed(2)}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -243,7 +243,7 @@ export default function Transactions() {
                           <p className={`font-semibold ${
                             transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
                           }`} data-testid={`transaction-amount-${transaction.id}`}>
-                            {transaction.type === 'contribution' ? '-' : '+'}${Number(transaction.amount).toFixed(2)}
+                            {transaction.type === 'contribution' ? '-' : '+'}£{Number(transaction.amount).toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -292,7 +292,7 @@ export default function Transactions() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <p className="font-semibold">${Number(contribution.amount).toFixed(2)}</p>
+                          <p className="font-semibold">£{Number(contribution.amount).toFixed(2)}</p>
                           {getStatusBadge(contribution.status)}
                         </div>
                       </div>

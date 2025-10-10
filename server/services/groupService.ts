@@ -47,9 +47,9 @@ export class GroupService {
     await storage.createNotification({
       userId: nextRecipient.userId,
       groupId: group.id,
-      type: "payout_ready",
-      title: "Payout Ready!",
-      message: `Your payout of $${payoutAmount} from ${group.name} is ready.`,
+      type: 'payout_ready',
+      title: 'Payout Ready!',
+      message: `Your payout of £${payoutAmount} from ${group.name} is ready.`,
     });
 
     // Send email notification
@@ -120,9 +120,9 @@ export class GroupService {
         await storage.createNotification({
           userId: user.id,
           groupId: group.id,
-          type: "payment_due",
-          title: "Payment Overdue",
-          message: `Your payment of $${contribution.amount} for ${group.name} is overdue.`,
+          type: 'payment_due',
+          title: 'Payment Overdue',
+          message: `Your payment of £${contribution.amount} for ${group.name} is overdue.`,
         });
       }
     }

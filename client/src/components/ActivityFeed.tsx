@@ -104,7 +104,7 @@ export function ActivityFeed({ transactions = [] }: ActivityFeedProps) {
                   <p className={`text-sm font-medium ${
                     transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
                   }`} data-testid={`activity-amount-${transaction.id}`}>
-                    {transaction.type === 'contribution' ? '-' : '+'}${Number(transaction.amount).toFixed(2)}
+                    {transaction.type === 'contribution' ? '-' : '+'}£{Number(transaction.amount).toFixed(2)}
                   </p>
                 </div>
               </div>

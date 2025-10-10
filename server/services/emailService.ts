@@ -65,7 +65,7 @@ export async function sendPaymentReminderEmail(
       <p>Hi ${userName},</p>
       <p>This is a friendly reminder that your contribution for <strong>${groupName}</strong> is due soon.</p>
       <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p><strong>Amount Due:</strong> $${amount}</p>
+        <p><strong>Amount Due:</strong> £${amount}</p>
         <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString()}</p>
       </div>
       <p>Please make your payment to avoid any delays in the group rotation.</p>
@@ -95,7 +95,7 @@ export async function sendPayoutNotificationEmail(
       <p>Hi ${userName},</p>
       <p>Great news! It's your turn to receive the payout from <strong>${groupName}</strong>.</p>
       <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
-        <p><strong>Payout Amount:</strong> $${amount}</p>
+        <p><strong>Payout Amount:</strong> £${amount}</p>
         <p><strong>Payout Date:</strong> ${payoutDate.toLocaleDateString()}</p>
       </div>
       <p>The funds will be transferred to your account within 2-3 business days.</p>
