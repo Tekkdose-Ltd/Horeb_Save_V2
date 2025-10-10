@@ -24,44 +24,67 @@ import { eq, and, desc, asc, sql, count, avg, sum } from "drizzle-orm";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<{ user: User; isNewUser: boolean }>;
   updateUserTrustScore(userId: string, trustScore: number): Promise<void>;
-  updateUserStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User>;
-  
+  updateUserStripeCustomerId(
+    userId: string,
+    stripeCustomerId: string
+  ): Promise<User>;
+
   // Group operations
   createGroup(group: InsertGroup): Promise<Group>;
   getGroup(id: string): Promise<Group | undefined>;
-  getGroupWithMembers(id: string): Promise<Group & { members: (GroupMember & { user: User })[] } | undefined>;
+  getGroupWithMembers(
+    id: string
+  ): Promise<
+    (Group & { members: (GroupMember & { user: User })[] }) | undefined
+  >;
   getUserGroups(userId: string): Promise<(Group & { memberCount: number })[]>;
   getPublicGroups(limit?: number): Promise<(Group & { memberCount: number })[]>;
   updateGroup(id: string, updates: Partial<Group>): Promise<Group>;
   deleteGroup(id: string): Promise<void>;
-  
+
   // Group member operations
   addGroupMember(member: InsertGroupMember): Promise<GroupMember>;
   getGroupMembers(groupId: string): Promise<(GroupMember & { user: User })[]>;
-  updateGroupMember(groupId: string, userId: string, updates: Partial<GroupMember>): Promise<GroupMember>;
+  updateGroupMember(
+    groupId: string,
+    userId: string,
+    updates: Partial<GroupMember>
+  ): Promise<GroupMember>;
   removeGroupMember(groupId: string, userId: string): Promise<void>;
-  
+
   // Contribution operations
   createContribution(contribution: InsertContribution): Promise<Contribution>;
   getContribution(id: string): Promise<Contribution | undefined>;
-  getUserContributions(userId: string, groupId?: string): Promise<Contribution[]>;
-  getGroupContributions(groupId: string, round?: number): Promise<Contribution[]>;
-  updateContribution(id: string, updates: Partial<Contribution>): Promise<Contribution>;
+  getUserContributions(
+    userId: string,
+    groupId?: string
+  ): Promise<Contribution[]>;
+  getGroupContributions(
+    groupId: string,
+    round?: number
+  ): Promise<Contribution[]>;
+  updateContribution(
+    id: string,
+    updates: Partial<Contribution>
+  ): Promise<Contribution>;
   getOverdueContributions(): Promise<Contribution[]>;
-  
+
   // Transaction operations
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getUserTransactions(userId: string, limit?: number): Promise<Transaction[]>;
   getGroupTransactions(groupId: string): Promise<Transaction[]>;
-  
+
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
-  getUserNotifications(userId: string, unreadOnly?: boolean): Promise<Notification[]>;
+  getUserNotifications(
+    userId: string,
+    unreadOnly?: boolean
+  ): Promise<Notification[]>;
   markNotificationAsRead(id: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
-  
+
   // Analytics operations
   getUserStats(userId: string): Promise<{
     activeGroups: number;
@@ -70,7 +93,7 @@ export interface IStorage {
     completedGroups: number;
     onTimePaymentRate: number;
   }>;
-  
+
   getGroupStats(groupId: string): Promise<{
     totalContributions: number;
     currentRound: number;
@@ -86,7 +109,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(
+    userData: UpsertUser
+  ): Promise<{ user: User; isNewUser: boolean }> {
+    // First check if user exists
+    const existingUser = await this.getUser(userData.id);
+    const isNewUser = !existingUser;
+
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -98,17 +127,24 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return user;
+
+    return { user, isNewUser };
   }
 
-  async updateUserTrustScore(userId: string, trustScore: number): Promise<void> {
+  async updateUserTrustScore(
+    userId: string,
+    trustScore: number
+  ): Promise<void> {
     await db
       .update(users)
       .set({ trustScore: trustScore.toString(), updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 
-  async updateUserStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User> {
+  async updateUserStripeCustomerId(
+    userId: string,
+    stripeCustomerId: string
+  ): Promise<User> {
     const [user] = await db
       .update(users)
       .set({ stripeCustomerId, updatedAt: new Date() })
@@ -119,7 +155,10 @@ export class DatabaseStorage implements IStorage {
 
   // Group operations
   async createGroup(group: InsertGroup): Promise<Group> {
-    const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const inviteCode = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
     const [newGroup] = await db
       .insert(groups)
       .values({ ...group, inviteCode })
@@ -132,7 +171,11 @@ export class DatabaseStorage implements IStorage {
     return group;
   }
 
-  async getGroupWithMembers(id: string): Promise<Group & { members: (GroupMember & { user: User })[] } | undefined> {
+  async getGroupWithMembers(
+    id: string
+  ): Promise<
+    (Group & { members: (GroupMember & { user: User })[] }) | undefined
+  > {
     const group = await this.getGroup(id);
     if (!group) return undefined;
 
@@ -145,14 +188,16 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...group,
-      members: members.map(row => ({
+      members: members.map((row) => ({
         ...row.group_members,
-        user: row.users
-      }))
+        user: row.users,
+      })),
     };
   }
 
-  async getUserGroups(userId: string): Promise<(Group & { memberCount: number })[]> {
+  async getUserGroups(
+    userId: string
+  ): Promise<(Group & { memberCount: number })[]> {
     const result = await db
       .select({
         ...groups,
@@ -164,22 +209,32 @@ export class DatabaseStorage implements IStorage {
         sql`(SELECT group_id, COUNT(*) as member_count FROM group_members WHERE is_active = true GROUP BY group_id)`,
         sql`members_count.group_id = groups.id`
       )
-      .where(and(eq(groupMembers.userId, userId), eq(groupMembers.isActive, true)))
+      .where(
+        and(eq(groupMembers.userId, userId), eq(groupMembers.isActive, true))
+      )
       .groupBy(groups.id)
       .orderBy(desc(groups.createdAt));
 
     return result;
   }
 
-  async getPublicGroups(limit = 10): Promise<(Group & { memberCount: number })[]> {
+  async getPublicGroups(
+    limit = 10
+  ): Promise<(Group & { memberCount: number })[]> {
     const result = await db
       .select({
         ...groups,
         memberCount: count(groupMembers.id),
       })
       .from(groups)
-      .leftJoin(groupMembers, and(eq(groups.id, groupMembers.groupId), eq(groupMembers.isActive, true)))
-      .where(and(eq(groups.isPublic, true), eq(groups.status, 'draft')))
+      .leftJoin(
+        groupMembers,
+        and(
+          eq(groups.id, groupMembers.groupId),
+          eq(groupMembers.isActive, true)
+        )
+      )
+      .where(and(eq(groups.isPublic, true), eq(groups.status, "draft")))
       .groupBy(groups.id)
       .orderBy(desc(groups.createdAt))
       .limit(limit);
@@ -202,29 +257,42 @@ export class DatabaseStorage implements IStorage {
 
   // Group member operations
   async addGroupMember(member: InsertGroupMember): Promise<GroupMember> {
-    const [newMember] = await db.insert(groupMembers).values(member).returning();
+    const [newMember] = await db
+      .insert(groupMembers)
+      .values(member)
+      .returning();
     return newMember;
   }
 
-  async getGroupMembers(groupId: string): Promise<(GroupMember & { user: User })[]> {
+  async getGroupMembers(
+    groupId: string
+  ): Promise<(GroupMember & { user: User })[]> {
     const result = await db
       .select()
       .from(groupMembers)
       .innerJoin(users, eq(groupMembers.userId, users.id))
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.isActive, true)))
+      .where(
+        and(eq(groupMembers.groupId, groupId), eq(groupMembers.isActive, true))
+      )
       .orderBy(asc(groupMembers.payoutOrder));
 
-    return result.map(row => ({
+    return result.map((row) => ({
       ...row.group_members,
-      user: row.users
+      user: row.users,
     }));
   }
 
-  async updateGroupMember(groupId: string, userId: string, updates: Partial<GroupMember>): Promise<GroupMember> {
+  async updateGroupMember(
+    groupId: string,
+    userId: string,
+    updates: Partial<GroupMember>
+  ): Promise<GroupMember> {
     const [updatedMember] = await db
       .update(groupMembers)
       .set(updates)
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+      .where(
+        and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId))
+      )
       .returning();
     return updatedMember;
   }
@@ -233,41 +301,73 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(groupMembers)
       .set({ isActive: false })
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)));
+      .where(
+        and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId))
+      );
   }
 
   // Contribution operations
-  async createContribution(contribution: InsertContribution): Promise<Contribution> {
-    const [newContribution] = await db.insert(contributions).values(contribution).returning();
+  async createContribution(
+    contribution: InsertContribution
+  ): Promise<Contribution> {
+    const [newContribution] = await db
+      .insert(contributions)
+      .values(contribution)
+      .returning();
     return newContribution;
   }
 
   async getContribution(id: string): Promise<Contribution | undefined> {
-    const [contribution] = await db.select().from(contributions).where(eq(contributions.id, id));
+    const [contribution] = await db
+      .select()
+      .from(contributions)
+      .where(eq(contributions.id, id));
     return contribution;
   }
 
-  async getUserContributions(userId: string, groupId?: string): Promise<Contribution[]> {
-    let query = db.select().from(contributions).where(eq(contributions.userId, userId));
-    
+  async getUserContributions(
+    userId: string,
+    groupId?: string
+  ): Promise<Contribution[]> {
+    let query = db
+      .select()
+      .from(contributions)
+      .where(eq(contributions.userId, userId));
+
     if (groupId) {
-      query = query.where(and(eq(contributions.userId, userId), eq(contributions.groupId, groupId)));
+      query = query.where(
+        and(
+          eq(contributions.userId, userId),
+          eq(contributions.groupId, groupId)
+        )
+      );
     }
-    
+
     return query.orderBy(desc(contributions.createdAt));
   }
 
-  async getGroupContributions(groupId: string, round?: number): Promise<Contribution[]> {
-    let query = db.select().from(contributions).where(eq(contributions.groupId, groupId));
-    
+  async getGroupContributions(
+    groupId: string,
+    round?: number
+  ): Promise<Contribution[]> {
+    let query = db
+      .select()
+      .from(contributions)
+      .where(eq(contributions.groupId, groupId));
+
     if (round) {
-      query = query.where(and(eq(contributions.groupId, groupId), eq(contributions.round, round)));
+      query = query.where(
+        and(eq(contributions.groupId, groupId), eq(contributions.round, round))
+      );
     }
-    
+
     return query.orderBy(desc(contributions.createdAt));
   }
 
-  async updateContribution(id: string, updates: Partial<Contribution>): Promise<Contribution> {
+  async updateContribution(
+    id: string,
+    updates: Partial<Contribution>
+  ): Promise<Contribution> {
     const [updatedContribution] = await db
       .update(contributions)
       .set({ ...updates, updatedAt: new Date() })
@@ -280,17 +380,25 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(contributions)
-      .where(and(eq(contributions.status, 'pending'), sql`due_date < NOW()`))
+      .where(and(eq(contributions.status, "pending"), sql`due_date < NOW()`))
       .orderBy(asc(contributions.dueDate));
   }
 
   // Transaction operations
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [newTransaction] = await db.insert(transactions).values(transaction).returning();
+  async createTransaction(
+    transaction: InsertTransaction
+  ): Promise<Transaction> {
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
     return newTransaction;
   }
 
-  async getUserTransactions(userId: string, limit = 10): Promise<Transaction[]> {
+  async getUserTransactions(
+    userId: string,
+    limit = 10
+  ): Promise<Transaction[]> {
     return db
       .select()
       .from(transactions)
@@ -308,27 +416,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Notification operations
-  async createNotification(notification: InsertNotification): Promise<Notification> {
-    const [newNotification] = await db.insert(notifications).values(notification).returning();
+  async createNotification(
+    notification: InsertNotification
+  ): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
     return newNotification;
   }
 
-  async getUserNotifications(userId: string, unreadOnly = false): Promise<Notification[]> {
-    let query = db.select().from(notifications).where(eq(notifications.userId, userId));
-    
+  async getUserNotifications(
+    userId: string,
+    unreadOnly = false
+  ): Promise<Notification[]> {
+    let query = db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+
     if (unreadOnly) {
-      query = query.where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+      query = query.where(
+        and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+      );
     }
-    
+
     return query.orderBy(desc(notifications.createdAt));
   }
 
   async markNotificationAsRead(id: string): Promise<void> {
-    await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id));
   }
 
   async markAllNotificationsAsRead(userId: string): Promise<void> {
-    await db.update(notifications).set({ isRead: true }).where(eq(notifications.userId, userId));
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
   }
 
   // Analytics operations
@@ -341,23 +468,27 @@ export class DatabaseStorage implements IStorage {
   }> {
     const user = await this.getUser(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     const [activeGroupsResult] = await db
       .select({ count: count() })
       .from(groupMembers)
       .innerJoin(groups, eq(groupMembers.groupId, groups.id))
-      .where(and(
-        eq(groupMembers.userId, userId),
-        eq(groupMembers.isActive, true),
-        eq(groups.status, 'active')
-      ));
+      .where(
+        and(
+          eq(groupMembers.userId, userId),
+          eq(groupMembers.isActive, true),
+          eq(groups.status, "active")
+        )
+      );
 
     const [totalSavedResult] = await db
       .select({ total: sum(contributions.amount) })
       .from(contributions)
-      .where(and(eq(contributions.userId, userId), eq(contributions.status, 'paid')));
+      .where(
+        and(eq(contributions.userId, userId), eq(contributions.status, "paid"))
+      );
 
     return {
       activeGroups: activeGroupsResult.count,
@@ -376,30 +507,38 @@ export class DatabaseStorage implements IStorage {
   }> {
     const group = await this.getGroup(groupId);
     if (!group) {
-      throw new Error('Group not found');
+      throw new Error("Group not found");
     }
 
     const [totalContributionsResult] = await db
       .select({ total: sum(contributions.amount) })
       .from(contributions)
-      .where(and(eq(contributions.groupId, groupId), eq(contributions.status, 'paid')));
+      .where(
+        and(
+          eq(contributions.groupId, groupId),
+          eq(contributions.status, "paid")
+        )
+      );
 
     const nextRecipient = await db
       .select()
       .from(groupMembers)
       .innerJoin(users, eq(groupMembers.userId, users.id))
-      .where(and(
-        eq(groupMembers.groupId, groupId),
-        eq(groupMembers.hasReceivedPayout, false),
-        eq(groupMembers.isActive, true)
-      ))
+      .where(
+        and(
+          eq(groupMembers.groupId, groupId),
+          eq(groupMembers.hasReceivedPayout, false),
+          eq(groupMembers.isActive, true)
+        )
+      )
       .orderBy(asc(groupMembers.payoutOrder))
       .limit(1);
 
     return {
       totalContributions: Number(totalContributionsResult.total || 0),
       currentRound: group.currentRound || 1,
-      nextPayoutAmount: Number(group.contributionAmount) * (group.maxMembers || 1),
+      nextPayoutAmount:
+        Number(group.contributionAmount) * (group.maxMembers || 1),
       nextPayoutRecipient: nextRecipient[0]?.users.id || null,
     };
   }

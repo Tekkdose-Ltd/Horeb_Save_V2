@@ -4,7 +4,10 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { groupService } from "./services/groupService";
 import { paymentService } from "./services/paymentService";
-import { sendGroupInvitationEmail } from "./services/emailService";
+import {
+  sendGroupInvitationEmail,
+  sendWelcomeEmail,
+} from "./services/emailService";
 import { insertGroupSchema, insertGroupMemberSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -13,7 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -25,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User stats
-  app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/stats", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const stats = await storage.getUserStats(userId);
@@ -37,17 +40,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Group routes
-  app.post('/api/groups', isAuthenticated, async (req: any, res) => {
+  app.post("/api/groups", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const groupData = insertGroupSchema.parse({
+
+      // Convert contributionAmount to string for decimal field
+      const requestData = {
         ...req.body,
+        contributionAmount: req.body.contributionAmount.toString(),
         creatorId: userId,
         totalRounds: req.body.maxMembers, // Default rounds equal to max members
-      });
+      };
+
+      const groupData = insertGroupSchema.parse(requestData);
 
       const group = await storage.createGroup(groupData);
-      
+
       // Add creator as first member
       await storage.addGroupMember({
         groupId: group.id,
@@ -58,11 +66,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(group);
     } catch (error) {
       console.error("Error creating group:", error);
-      res.status(400).json({ message: "Failed to create group" });
+      if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.issues);
+        res.status(400).json({
+          message: "Validation failed",
+          errors: error.issues,
+        });
+      } else {
+        res.status(400).json({ message: "Failed to create group" });
+      }
     }
   });
 
-  app.get('/api/groups/my', isAuthenticated, async (req: any, res) => {
+  app.get("/api/groups/my", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const groups = await storage.getUserGroups(userId);
@@ -73,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/groups/public', async (req, res) => {
+  app.get("/api/groups/public", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const groups = await storage.getPublicGroups(limit);
@@ -84,20 +100,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/groups/:id', isAuthenticated, async (req: any, res) => {
+  app.get("/api/groups/:id", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
       const group = await storage.getGroupWithMembers(groupId);
-      
+
       if (!group) {
         return res.status(404).json({ message: "Group not found" });
       }
 
       // Check if user is member or creator
       const userId = req.user.claims.sub;
-      const isMember = group.members.some(member => member.userId === userId);
+      const isMember = group.members.some((member) => member.userId === userId);
       const isCreator = group.creatorId === userId;
-      
+
       if (!isMember && !isCreator && !group.isPublic) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -109,11 +125,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/groups/:id/join', isAuthenticated, async (req: any, res) => {
+  app.post("/api/groups/:id/join", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
       const userId = req.user.claims.sub;
-      
+
       const group = await storage.getGroupWithMembers(groupId);
       if (!group) {
         return res.status(404).json({ message: "Group not found" });
@@ -123,14 +139,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Group is full" });
       }
 
-      if (group.status !== 'draft') {
-        return res.status(400).json({ message: "Group is not accepting new members" });
+      if (group.status !== "draft") {
+        return res
+          .status(400)
+          .json({ message: "Group is not accepting new members" });
       }
 
       // Check if user is already a member
-      const existingMember = group.members.find(member => member.userId === userId);
+      const existingMember = group.members.find(
+        (member) => member.userId === userId
+      );
       if (existingMember) {
-        return res.status(400).json({ message: "Already a member of this group" });
+        return res
+          .status(400)
+          .json({ message: "Already a member of this group" });
       }
 
       const member = await storage.addGroupMember({
@@ -143,8 +165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId,
         groupId,
-        type: 'group_joined',
-        title: 'Group Joined',
+        type: "group_joined",
+        title: "Group Joined",
         message: `You have successfully joined ${group.name}.`,
       });
 
@@ -155,34 +177,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/groups/:id/start', isAuthenticated, async (req: any, res) => {
+  app.post("/api/groups/:id/start", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
       const userId = req.user.claims.sub;
-      
+
       const group = await storage.getGroup(groupId);
       if (!group) {
         return res.status(404).json({ message: "Group not found" });
       }
 
       if (group.creatorId !== userId) {
-        return res.status(403).json({ message: "Only group creator can start the group" });
+        return res
+          .status(403)
+          .json({ message: "Only group creator can start the group" });
       }
 
       await groupService.startGroup(groupId);
       res.json({ message: "Group started successfully" });
     } catch (error) {
       console.error("Error starting group:", error);
-      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to start group" });
+      res.status(400).json({
+        message:
+          error instanceof Error ? error.message : "Failed to start group",
+      });
     }
   });
 
-  app.post('/api/groups/:id/invite', isAuthenticated, async (req: any, res) => {
+  app.post("/api/groups/:id/invite", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
       const userId = req.user.claims.sub;
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -193,7 +220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (group.creatorId !== userId) {
-        return res.status(403).json({ message: "Only group creator can send invitations" });
+        return res
+          .status(403)
+          .json({ message: "Only group creator can send invitations" });
       }
 
       const user = await storage.getUser(userId);
@@ -201,8 +230,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const inviterName = `${user.firstName} ${user.lastName}`.trim() || 'A CircleSave member';
-      
+      const inviterName =
+        `${user.firstName} ${user.lastName}`.trim() || "A CircleSave member";
+
       await sendGroupInvitationEmail(
         email,
         inviterName,
@@ -218,48 +248,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payment routes
-  app.post('/api/contributions/:id/pay', isAuthenticated, async (req: any, res) => {
-    try {
-      const contributionId = req.params.id;
-      const userId = req.user.claims.sub;
-      
-      const contribution = await storage.getContribution(contributionId);
-      if (!contribution) {
-        return res.status(404).json({ message: "Contribution not found" });
+  app.post(
+    "/api/contributions/:id/pay",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const contributionId = req.params.id;
+        const userId = req.user.claims.sub;
+
+        const contribution = await storage.getContribution(contributionId);
+        if (!contribution) {
+          return res.status(404).json({ message: "Contribution not found" });
+        }
+
+        if (contribution.userId !== userId) {
+          return res
+            .status(403)
+            .json({ message: "Not authorized to pay this contribution" });
+        }
+
+        if (contribution.status !== "pending") {
+          return res
+            .status(400)
+            .json({ message: "Contribution is not pending payment" });
+        }
+
+        const { clientSecret, paymentIntentId } =
+          await paymentService.createPaymentIntent(
+            userId,
+            contributionId,
+            Number(contribution.amount)
+          );
+
+        res.json({ clientSecret, paymentIntentId });
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        res.status(500).json({ message: "Failed to create payment intent" });
       }
-
-      if (contribution.userId !== userId) {
-        return res.status(403).json({ message: "Not authorized to pay this contribution" });
-      }
-
-      if (contribution.status !== 'pending') {
-        return res.status(400).json({ message: "Contribution is not pending payment" });
-      }
-
-      const { clientSecret, paymentIntentId } = await paymentService.createPaymentIntent(
-        userId,
-        contributionId,
-        Number(contribution.amount)
-      );
-
-      res.json({ clientSecret, paymentIntentId });
-    } catch (error) {
-      console.error("Error creating payment intent:", error);
-      res.status(500).json({ message: "Failed to create payment intent" });
     }
-  });
+  );
 
   // Stripe webhook for payment confirmation
-  app.post('/api/webhook/stripe', async (req, res) => {
+  app.post("/api/webhook/stripe", async (req, res) => {
     try {
       const { type, data } = req.body;
-      
-      if (type === 'payment_intent.succeeded') {
+
+      if (type === "payment_intent.succeeded") {
         await paymentService.handlePaymentSuccess(data.object.id);
-      } else if (type === 'payment_intent.payment_failed') {
+      } else if (type === "payment_intent.payment_failed") {
         await paymentService.handlePaymentFailure(data.object.id);
       }
-      
+
       res.json({ received: true });
     } catch (error) {
       console.error("Error handling Stripe webhook:", error);
@@ -268,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transaction routes
-  app.get('/api/transactions/my', isAuthenticated, async (req: any, res) => {
+  app.get("/api/transactions/my", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -281,11 +320,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification routes
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const unreadOnly = req.query.unread === 'true';
-      const notifications = await storage.getUserNotifications(userId, unreadOnly);
+      const unreadOnly = req.query.unread === "true";
+      const notifications = await storage.getUserNotifications(
+        userId,
+        unreadOnly
+      );
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -293,30 +335,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
-    try {
-      const notificationId = req.params.id;
-      await storage.markNotificationAsRead(notificationId);
-      res.json({ message: "Notification marked as read" });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      res.status(500).json({ message: "Failed to mark notification as read" });
+  app.put(
+    "/api/notifications/:id/read",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const notificationId = req.params.id;
+        await storage.markNotificationAsRead(notificationId);
+        res.json({ message: "Notification marked as read" });
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to mark notification as read" });
+      }
     }
-  });
+  );
 
-  app.put('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      await storage.markAllNotificationsAsRead(userId);
-      res.json({ message: "All notifications marked as read" });
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      res.status(500).json({ message: "Failed to mark all notifications as read" });
+  app.put(
+    "/api/notifications/read-all",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        await storage.markAllNotificationsAsRead(userId);
+        res.json({ message: "All notifications marked as read" });
+      } catch (error) {
+        console.error("Error marking all notifications as read:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to mark all notifications as read" });
+      }
     }
-  });
+  );
 
   // Contribution routes
-  app.get('/api/contributions/my', isAuthenticated, async (req: any, res) => {
+  app.get("/api/contributions/my", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const groupId = req.query.groupId as string;

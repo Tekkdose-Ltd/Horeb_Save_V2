@@ -1,18 +1,20 @@
-import { storage } from '../storage';
-import { sendPayoutNotificationEmail, sendPaymentReminderEmail } from './emailService';
-import type { Group, GroupMember, User } from '@shared/schema';
+import { storage } from "../storage";
+import {
+  sendPayoutNotificationEmail,
+  sendPaymentReminderEmail,
+} from "./emailService";
+import type { Group, GroupMember, User } from "@shared/schema";
 
 export class GroupService {
-  
   async processGroupRotation(groupId: string): Promise<void> {
     const group = await storage.getGroupWithMembers(groupId);
-    if (!group || group.status !== 'active') {
+    if (!group || group.status !== "active") {
       return;
     }
 
     // Find next member to receive payout
     const nextRecipient = group.members.find(
-      member => !member.hasReceivedPayout && member.isActive
+      (member) => !member.hasReceivedPayout && member.isActive
     );
 
     if (!nextRecipient) {
@@ -22,14 +24,15 @@ export class GroupService {
     }
 
     // Calculate payout amount
-    const payoutAmount = Number(group.contributionAmount) * group.members.length;
+    const payoutAmount =
+      Number(group.contributionAmount) * group.members.length;
 
     // Create payout transaction
     await storage.createTransaction({
       groupId: group.id,
       toUserId: nextRecipient.userId,
       amount: payoutAmount.toString(),
-      type: 'payout',
+      type: "payout",
       round: group.currentRound,
       description: `Payout for round ${group.currentRound}`,
     });
@@ -53,7 +56,7 @@ export class GroupService {
     if (nextRecipient.user.email) {
       await sendPayoutNotificationEmail(
         nextRecipient.user.email,
-        nextRecipient.user.firstName || 'Member',
+        nextRecipient.user.firstName || "Member",
         group.name,
         payoutAmount,
         new Date()
@@ -72,9 +75,12 @@ export class GroupService {
     }
   }
 
-  async createContributionsForRound(group: Group & { members: (GroupMember & { user: User })[] }, round: number): Promise<void> {
+  async createContributionsForRound(
+    group: Group & { members: (GroupMember & { user: User })[] },
+    round: number
+  ): Promise<void> {
     const dueDate = this.calculateNextPayoutDate(group);
-    
+
     for (const member of group.members) {
       if (member.isActive) {
         await storage.createContribution({
@@ -83,7 +89,7 @@ export class GroupService {
           amount: group.contributionAmount,
           round,
           dueDate,
-          status: 'pending',
+          status: "pending",
         });
       }
     }
@@ -91,15 +97,15 @@ export class GroupService {
 
   async sendPaymentReminders(): Promise<void> {
     const overdueContributions = await storage.getOverdueContributions();
-    
+
     for (const contribution of overdueContributions) {
       const user = await storage.getUser(contribution.userId);
       const group = await storage.getGroup(contribution.groupId);
-      
+
       if (user && group && user.email) {
         await sendPaymentReminderEmail(
           user.email,
-          user.firstName || 'Member',
+          user.firstName || "Member",
           group.name,
           Number(contribution.amount),
           contribution.dueDate
@@ -107,7 +113,7 @@ export class GroupService {
 
         // Update contribution status to overdue
         await storage.updateContribution(contribution.id, {
-          status: 'overdue',
+          status: "overdue",
         });
 
         // Create notification
@@ -124,7 +130,7 @@ export class GroupService {
 
   async completeGroup(groupId: string): Promise<void> {
     await storage.updateGroup(groupId, {
-      status: 'completed',
+      status: "completed",
       completedAt: new Date(),
     });
 
@@ -132,11 +138,11 @@ export class GroupService {
     const members = await storage.getGroupMembers(groupId);
     for (const member of members) {
       await this.updateMemberTrustScore(member.userId);
-      
+
       // Update user's completed groups count
       const user = await storage.getUser(member.userId);
       if (user) {
-        await storage.upsertUser({
+        const { user: updatedUser } = await storage.upsertUser({
           ...user,
           totalGroupsCompleted: (user.totalGroupsCompleted || 0) + 1,
         });
@@ -148,15 +154,18 @@ export class GroupService {
     // Calculate trust score based on payment history
     const contributions = await storage.getUserContributions(userId);
     const totalContributions = contributions.length;
-    const onTimeContributions = contributions.filter(c => 
-      c.status === 'paid' && c.paidDate && c.paidDate <= c.dueDate
+    const onTimeContributions = contributions.filter(
+      (c) => c.status === "paid" && c.paidDate && c.paidDate <= c.dueDate
     ).length;
-    
-    const onTimeRate = totalContributions > 0 ? (onTimeContributions / totalContributions) * 100 : 0;
+
+    const onTimeRate =
+      totalContributions > 0
+        ? (onTimeContributions / totalContributions) * 100
+        : 0;
     const trustScore = Math.min(5.0, (onTimeRate / 100) * 5); // Max 5.0 trust score
-    
+
     await storage.updateUserTrustScore(userId, trustScore);
-    await storage.upsertUser({
+    const { user: updatedUser } = await storage.upsertUser({
       id: userId,
       onTimePaymentRate: onTimeRate.toString(),
     } as any);
@@ -165,27 +174,27 @@ export class GroupService {
   private calculateNextPayoutDate(group: Group): Date {
     const now = new Date();
     const nextDate = new Date(now);
-    
+
     switch (group.frequency) {
-      case 'weekly':
+      case "weekly":
         nextDate.setDate(now.getDate() + 7);
         break;
-      case 'bi-weekly':
+      case "bi-weekly":
         nextDate.setDate(now.getDate() + 14);
         break;
-      case 'monthly':
+      case "monthly":
       default:
         nextDate.setMonth(now.getMonth() + 1);
         break;
     }
-    
+
     return nextDate;
   }
 
   async assignPayoutOrder(groupId: string): Promise<void> {
     const members = await storage.getGroupMembers(groupId);
     const shuffledMembers = [...members].sort(() => Math.random() - 0.5);
-    
+
     for (let i = 0; i < shuffledMembers.length; i++) {
       await storage.updateGroupMember(groupId, shuffledMembers[i].userId, {
         payoutOrder: i + 1,
@@ -196,11 +205,11 @@ export class GroupService {
   async startGroup(groupId: string): Promise<void> {
     const group = await storage.getGroupWithMembers(groupId);
     if (!group) {
-      throw new Error('Group not found');
+      throw new Error("Group not found");
     }
 
     if (group.members.length < 2) {
-      throw new Error('Group needs at least 2 members to start');
+      throw new Error("Group needs at least 2 members to start");
     }
 
     // Assign payout order
@@ -208,7 +217,7 @@ export class GroupService {
 
     // Update group status
     await storage.updateGroup(groupId, {
-      status: 'active',
+      status: "active",
       startDate: new Date(),
       nextPayoutDate: this.calculateNextPayoutDate(group),
       totalRounds: group.members.length,
@@ -222,8 +231,8 @@ export class GroupService {
       await storage.createNotification({
         userId: member.userId,
         groupId: group.id,
-        type: 'group_started',
-        title: 'Group Started!',
+        type: "group_started",
+        title: "Group Started!",
         message: `${group.name} has started. Your first contribution is due soon.`,
       });
     }

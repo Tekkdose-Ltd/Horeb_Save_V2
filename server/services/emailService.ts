@@ -146,3 +146,59 @@ export async function sendGroupInvitationEmail(
     html,
   });
 }
+
+export async function sendWelcomeEmail(
+  userEmail: string,
+  userName: string
+): Promise<boolean> {
+  const subject = "Welcome to CircleSave!";
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #2563eb; text-align: center;">Welcome to CircleSave! 🎉</h1>
+      <p>Hi ${userName},</p>
+      <p>Welcome to CircleSave! We're excited to have you join our community of smart savers.</p>
+      
+      <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+        <h3 style="color: #2563eb; margin-top: 0;">What's Next?</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li>🏦 <strong>Join a savings group</strong> or create your own</li>
+          <li>💰 <strong>Start saving</strong> with friends and family</li>
+          <li>🔄 <strong>Take turns</strong> receiving the pooled contributions</li>
+          <li>📈 <strong>Build your trust score</strong> with on-time payments</li>
+        </ul>
+      </div>
+
+      <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #059669; margin-top: 0;">How CircleSave Works:</h3>
+        <p><strong>1. Join or Create a Group:</strong> Find friends or family to save with</p>
+        <p><strong>2. Contribute Regularly:</strong> Everyone puts in the same amount each cycle</p>
+        <p><strong>3. Take Turns Receiving:</strong> Each member gets the full pot when it's their turn</p>
+        <p><strong>4. Build Trust:</strong> Complete groups and maintain good payment history</p>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.BASE_URL || "https://circlesave.com"}/dashboard" 
+           style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+          Get Started Now
+        </a>
+      </div>
+
+      <p>If you have any questions, feel free to reach out to our support team.</p>
+      <p>Happy saving!</p>
+      <p><strong>The CircleSave Team</strong></p>
+      
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+      <p style="font-size: 12px; color: #6b7280; text-align: center;">
+        CircleSave - Building financial communities together<br>
+        This email was sent because you registered for a CircleSave account.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: userEmail,
+    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
+    subject,
+    html,
+  });
+}

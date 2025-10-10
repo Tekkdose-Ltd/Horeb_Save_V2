@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { sendWelcomeEmail } from "./services/emailService";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -55,13 +56,27 @@ function updateUserSession(
 }
 
 async function upsertUser(claims: any) {
-  await storage.upsertUser({
+  const { user, isNewUser } = await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
   });
+
+  // Send welcome email for new users
+  if (isNewUser && user.email) {
+    const userName =
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() || "New Member";
+    try {
+      await sendWelcomeEmail(user.email, userName);
+      console.log(`Welcome email sent to ${user.email}`);
+    } catch (error) {
+      console.error(`Failed to send welcome email to ${user.email}:`, error);
+    }
+  }
+
+  return user;
 }
 
 export async function setupAuth(app: Express) {
