@@ -48,8 +48,8 @@ export class PaymentService {
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
+      amount: Math.round(amount * 100), // Convert to pence
+      currency: 'gbp',
       customer: customerId,
       metadata: {
         contributionId,
@@ -109,7 +109,7 @@ export class PaymentService {
         groupId,
         type: 'payment_received',
         title: 'Payment Confirmed',
-        message: `Your contribution of $${paymentIntent.amount / 100} for ${group.name} has been received.`,
+        message: `Your contribution of £${paymentIntent.amount / 100} for ${group.name} has been received.`,
       });
     }
 

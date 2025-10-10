@@ -46,7 +46,7 @@ export class GroupService {
       groupId: group.id,
       type: 'payout_ready',
       title: 'Payout Ready!',
-      message: `Your payout of $${payoutAmount} from ${group.name} is ready.`,
+      message: `Your payout of £${payoutAmount} from ${group.name} is ready.`,
     });
 
     // Send email notification
@@ -116,7 +116,7 @@ export class GroupService {
           groupId: group.id,
           type: 'payment_due',
           title: 'Payment Overdue',
-          message: `Your payment of $${contribution.amount} for ${group.name} is overdue.`,
+          message: `Your payment of £${contribution.amount} for ${group.name} is overdue.`,
         });
       }
     }

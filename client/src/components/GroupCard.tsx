@@ -64,7 +64,7 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
             {group.name}
           </h4>
           <p className="text-sm text-muted-foreground">
-            {group.memberCount}/{group.maxMembers} members • ${group.contributionAmount}/{group.frequency} • Started {group.status === 'active' ? 'Active' : 'Draft'}
+            {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency} • Started {group.status === 'active' ? 'Active' : 'Draft'}
           </p>
         </div>
         {getStatusBadge(group.status)}
@@ -98,7 +98,7 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
           </div>
           <div className="flex items-center space-x-1">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
-            <span>${group.contributionAmount}</span>
+            <span>£{group.contributionAmount}</span>
           </div>
         </div>
         
