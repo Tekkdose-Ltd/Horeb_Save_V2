@@ -9,6 +9,8 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Groups from "@/pages/groups";
 import Transactions from "@/pages/transactions";
+import Profile from "@/pages/profile";
+import Notifications from "@/pages/notifications";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,6 +24,8 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/groups" component={Groups} />
           <Route path="/transactions" component={Transactions} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/notifications" component={Notifications} />
         </>
       )}
       <Route component={NotFound} />
