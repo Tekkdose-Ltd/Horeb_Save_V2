@@ -205,10 +205,6 @@ export class DatabaseStorage implements IStorage {
       })
       .from(groups)
       .innerJoin(groupMembers, eq(groups.id, groupMembers.groupId))
-      .leftJoin(
-        sql`(SELECT group_id, COUNT(*) as member_count FROM group_members WHERE is_active = true GROUP BY group_id)`,
-        sql`members_count.group_id = groups.id`
-      )
       .where(
         and(eq(groupMembers.userId, userId), eq(groupMembers.isActive, true))
       )
