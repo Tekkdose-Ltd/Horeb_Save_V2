@@ -8,6 +8,8 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Groups from "@/pages/groups";
+import GroupDetails from "@/pages/group-details";
+import ManageGroup from "@/pages/manage-group";
 import Transactions from "@/pages/transactions";
 import Profile from "@/pages/profile";
 import Notifications from "@/pages/notifications";
@@ -23,6 +25,8 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/groups" component={Groups} />
+          <Route path="/groups/:id" component={GroupDetails} />
+          <Route path="/groups/:id/manage" component={ManageGroup} />
           <Route path="/transactions" component={Transactions} />
           <Route path="/profile" component={Profile} />
           <Route path="/notifications" component={Notifications} />

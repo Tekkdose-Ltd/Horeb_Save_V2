@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, Calendar, DollarSign } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface GroupCardProps {
   group: {
@@ -21,6 +22,7 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ group, showActions = false }: GroupCardProps) {
+  const [, setLocation] = useLocation();
   const progress = group.totalRounds 
     ? ((group.currentRound || 1) / group.totalRounds) * 100 
     : 0;
@@ -125,11 +127,22 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
 
       {showActions && (
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" size="sm" className="flex-1" data-testid={`button-view-group-${group.id}`}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1" 
+            onClick={() => setLocation(`/groups/${group.id}`)}
+            data-testid={`button-view-group-${group.id}`}
+          >
             View Details
           </Button>
           {group.status === 'draft' && (
-            <Button size="sm" className="flex-1" data-testid={`button-manage-group-${group.id}`}>
+            <Button 
+              size="sm" 
+              className="flex-1" 
+              onClick={() => setLocation(`/groups/${group.id}/manage`)}
+              data-testid={`button-manage-group-${group.id}`}
+            >
               Manage
             </Button>
           )}

@@ -14,7 +14,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-08-27.basil",
 }) : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -228,6 +228,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/groups/:id/members", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const group = await storage.getGroupWithMembers(groupId);
+
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      // Check if user is member or creator
+      const userId = req.user.claims.sub;
+      const isMember = group.members.some((member) => member.userId === userId);
+      const isCreator = group.creatorId === userId;
+
+      if (!isMember && !isCreator && !group.isPublic) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(group.members);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ message: "Failed to fetch group members" });
+    }
+  });
+
   app.post("/api/groups/:id/invite", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
@@ -268,6 +293,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending invitation:", error);
       res.status(500).json({ message: "Failed to send invitation" });
+    }
+  });
+
+  app.post("/api/groups/:id/activate", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const userId = req.user.claims.sub;
+
+      const group = await storage.getGroupWithMembers(groupId);
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      if (group.creatorId !== userId) {
+        return res
+          .status(403)
+          .json({ message: "Only group creator can activate the group" });
+      }
+
+      if (group.status !== 'draft') {
+        return res.status(400).json({ message: "Group is not in draft status" });
+      }
+
+      if (group.members.length < 2) {
+        return res.status(400).json({ message: "Group must have at least 2 members to activate" });
+      }
+
+      await groupService.startGroup(groupId);
+      res.json({ message: "Group activated successfully" });
+    } catch (error) {
+      console.error("Error activating group:", error);
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "Failed to activate group",
+      });
+    }
+  });
+
+  app.delete("/api/groups/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const userId = req.user.claims.sub;
+
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      if (group.creatorId !== userId) {
+        return res
+          .status(403)
+          .json({ message: "Only group creator can delete the group" });
+      }
+
+      if (group.status !== 'draft') {
+        return res
+          .status(400)
+          .json({ message: "Only draft groups can be deleted" });
+      }
+
+      await storage.deleteGroup(groupId);
+      res.json({ message: "Group deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      res.status(500).json({ message: "Failed to delete group" });
     }
   });
 
@@ -429,6 +518,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         customerId = customer.id;
         await storage.updateUserStripeCustomerId(userId, customerId);
+      }
+
+      if (!customerId) {
+        return res.status(400).json({ message: "Unable to create Stripe customer" });
       }
 
       // Create setup intent
