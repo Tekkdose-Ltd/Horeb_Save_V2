@@ -97,7 +97,7 @@ export default function GroupDetails() {
     });
   };
 
-  const isCreator = user?.id === group.creatorId;
+  const isCreator = user && user.id === group.creatorId;
 
   return (
     <div className="min-h-screen bg-background">

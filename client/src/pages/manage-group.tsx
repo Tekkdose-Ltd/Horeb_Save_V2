@@ -129,7 +129,7 @@ export default function ManageGroup() {
     );
   }
 
-  if (!group || group.creatorId !== user?.id) {
+  if (!group || !user || group.creatorId !== user.id) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
