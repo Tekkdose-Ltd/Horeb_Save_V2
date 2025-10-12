@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { 
   CheckCircle, 
   UserPlus, 
-  DollarSign, 
+  PoundSterling, 
   ArrowUpCircle, 
   ArrowDownCircle,
   RefreshCw 
@@ -32,7 +32,7 @@ export function ActivityFeed({ transactions = [] }: ActivityFeedProps) {
       case 'refund':
         return <RefreshCw className="text-accent text-xs" />;
       default:
-        return <DollarSign className="text-muted-foreground text-xs" />;
+        return <PoundSterling className="text-muted-foreground text-xs" />;
     }
   };
 
@@ -112,7 +112,7 @@ export function ActivityFeed({ transactions = [] }: ActivityFeedProps) {
           ) : (
             <div className="text-center py-6" data-testid="empty-activity-feed">
               <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
-                <DollarSign className="w-6 h-6 text-muted-foreground" />
+                <PoundSterling className="w-6 h-6 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">No recent activity</p>
             </div>

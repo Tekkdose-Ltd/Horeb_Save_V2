@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  ArrowLeft, Users, DollarSign, Calendar, 
+  ArrowLeft, Users, PoundSterling, Calendar, 
   Clock, TrendingUp, Settings 
 } from "lucide-react";
 
@@ -160,7 +160,7 @@ export default function GroupDetails() {
 
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-secondary" />
+                    <PoundSterling className="w-6 h-6 text-secondary" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Contribution</p>

@@ -10,7 +10,7 @@ import { CreateGroupModal } from "@/components/CreateGroupModal";
 import { GroupCard } from "@/components/GroupCard";
 import { TrustScore } from "@/components/TrustScore";
 import { ActivityFeed } from "@/components/ActivityFeed";
-import { Users, DollarSign, Clock, Star, Plus, Bell } from "lucide-react";
+import { Users, PoundSterling, Clock, Star, Plus, Bell } from "lucide-react";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -118,7 +118,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                    <DollarSign className="text-secondary text-xl" />
+                    <PoundSterling className="text-secondary text-xl" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Total Saved</p>
@@ -296,7 +296,7 @@ export default function Dashboard() {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           transaction.type === 'contribution' ? 'bg-destructive/10' : 'bg-secondary/10'
                         }`}>
-                          <DollarSign className={`text-xs ${
+                          <PoundSterling className={`text-xs ${
                             transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
                           }`} />
                         </div>

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Users, Calendar, DollarSign } from "lucide-react";
+import { Users, Calendar, PoundSterling } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface GroupCardProps {
@@ -99,7 +99,7 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
             </span>
           </div>
           <div className="flex items-center space-x-1">
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
+            <PoundSterling className="w-4 h-4 text-muted-foreground" />
             <span>£{group.contributionAmount}</span>
           </div>
         </div>
