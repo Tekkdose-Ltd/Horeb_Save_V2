@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PaymentMethodsModal } from "@/components/PaymentMethodsModal";
 import { User, Mail, Shield, Award, Calendar } from "lucide-react";
 
 export default function Profile() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -125,7 +127,12 @@ export default function Profile() {
                       <p className="font-medium">Payment Methods</p>
                       <p className="text-sm text-muted-foreground">Manage your saved payment methods</p>
                     </div>
-                    <Button variant="outline" size="sm" data-testid="button-payment-methods">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowPaymentMethods(true)}
+                      data-testid="button-payment-methods"
+                    >
                       Manage
                     </Button>
                   </div>
@@ -210,6 +217,11 @@ export default function Profile() {
           </div>
         </div>
       </main>
+
+      <PaymentMethodsModal 
+        isOpen={showPaymentMethods} 
+        onClose={() => setShowPaymentMethods(false)} 
+      />
     </div>
   );
 }
