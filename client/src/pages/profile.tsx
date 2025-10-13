@@ -5,12 +5,14 @@ import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PaymentMethodsModal } from "@/components/PaymentMethodsModal";
+import { SecurityModal } from "@/components/SecurityModal";
 import { User, Mail, Shield, Award, Calendar } from "lucide-react";
 
 export default function Profile() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -142,7 +144,12 @@ export default function Profile() {
                       <p className="font-medium">Security</p>
                       <p className="text-sm text-muted-foreground">Update your password and security settings</p>
                     </div>
-                    <Button variant="outline" size="sm" data-testid="button-security">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowSecurity(true)}
+                      data-testid="button-security"
+                    >
                       Update
                     </Button>
                   </div>
@@ -221,6 +228,11 @@ export default function Profile() {
       <PaymentMethodsModal 
         isOpen={showPaymentMethods} 
         onClose={() => setShowPaymentMethods(false)} 
+      />
+      
+      <SecurityModal 
+        isOpen={showSecurity} 
+        onClose={() => setShowSecurity(false)} 
       />
     </div>
   );

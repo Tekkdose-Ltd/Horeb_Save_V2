@@ -578,6 +578,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session management routes
+  app.get("/api/sessions", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentSessionId = req.sessionID;
+      const userId = req.user.claims.sub;
+
+      const sessions = await storage.getUserSessions(userId);
+      
+      const sessionList = sessions.map((session: any) => ({
+        sid: session.sid,
+        lastActive: session.expire,
+        isCurrent: session.sid === currentSessionId,
+      }));
+
+      res.json(sessionList);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  });
+
+  app.post("/api/auth/logout-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Delete all user sessions from database
+      await storage.deleteUserSessions(userId);
+      
+      // Destroy current session
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Failed to logout" });
+        }
+        res.json({ message: "All sessions logged out successfully" });
+      });
+    } catch (error) {
+      console.error("Error logging out all sessions:", error);
+      res.status(500).json({ message: "Failed to logout all sessions" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
