@@ -95,10 +95,11 @@ export default function Landing() {
                 <Button
                   variant="outline"
                   size="lg"
+                  asChild
                   className="text-lg px-8 py-3 text-white border-2 border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20"
                   data-testid="button-learn-more"
                 >
-                  Learn How It Works
+                  <a href="#how-it-works">Learn How It Works</a>
                 </Button>
               </div>
             </div>
