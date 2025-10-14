@@ -1,52 +1,105 @@
-import { MailService } from "@sendgrid/mail";
+import sgMail from '@sendgrid/mail';
 
-const isValidSendGridKey = (key: string) => key && key.startsWith("SG.");
+let connectionSettings: any;
 
-if (
-  !process.env.SENDGRID_API_KEY ||
-  !isValidSendGridKey(process.env.SENDGRID_API_KEY)
-) {
-  console.warn(
-    "SENDGRID_API_KEY environment variable not set or invalid. Email notifications will be disabled."
-  );
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
+    throw new Error('SendGrid not connected');
+  }
+  return {apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email};
 }
 
-const mailService = new MailService();
-if (
-  process.env.SENDGRID_API_KEY &&
-  isValidSendGridKey(process.env.SENDGRID_API_KEY)
-) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+// WARNING: Never cache this client.
+// Access tokens expire, so a new client must be created each time.
+// Always call this function again to get a fresh client.
+async function getUncachableSendGridClient() {
+  const {apiKey, email} = await getCredentials();
+  sgMail.setApiKey(apiKey);
+  return {
+    client: sgMail,
+    fromEmail: email
+  };
 }
 
 interface EmailParams {
   to: string;
-  from: string;
+  from?: string;
   subject: string;
   text?: string;
   html?: string;
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (
-    !process.env.SENDGRID_API_KEY ||
-    !isValidSendGridKey(process.env.SENDGRID_API_KEY)
-  ) {
-    console.log("Email would be sent:", params.subject, "to", params.to);
-    return true; // Return true in development
-  }
-
   try {
-    await mailService.send({
+    const { client, fromEmail } = await getUncachableSendGridClient();
+    
+    // Build email payload - only include text if it has content
+    const emailPayload: any = {
+      to: params.to,
+      from: params.from || fromEmail,
+      subject: params.subject,
+    };
+    
+    // Include html if provided
+    if (params.html) {
+      emailPayload.html = params.html;
+    }
+    
+    // Include text if provided, otherwise omit it entirely
+    if (params.text && params.text.length > 0) {
+      emailPayload.text = params.text;
+    }
+    
+    await client.send(emailPayload);
+    
+    console.log(`Email sent successfully: ${params.subject} to ${params.to}`);
+    return true;
+  } catch (error: any) {
+    console.error("SendGrid email error:", error);
+    
+    // If SendGrid is not connected or connectors hostname is missing, just log the email (soft success)
+    if (error instanceof Error && (
+      error.message.includes('SendGrid not connected') ||
+      error.message.includes('X_REPLIT_TOKEN not found')
+    )) {
+      console.log("SendGrid not connected. Email would be sent:", params.subject, "to", params.to);
+      return true; // Return true to not block the application
+    }
+    
+    // Log detailed error information for genuine send failures
+    if (error?.response?.body) {
+      console.error("SendGrid API Response:", JSON.stringify(error.response.body, null, 2));
+    }
+    
+    // Log the email that would have been sent
+    console.log("Failed to send email. Email details:", {
       to: params.to,
       from: params.from,
-      subject: params.subject,
-      text: params.text || "",
-      html: params.html,
+      subject: params.subject
     });
-    return true;
-  } catch (error) {
-    console.error("SendGrid email error:", error);
+    
+    // Return false for genuine send failures
     return false;
   }
 }
@@ -75,7 +128,6 @@ export async function sendPaymentReminderEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
@@ -105,7 +157,6 @@ export async function sendPayoutNotificationEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
@@ -141,7 +192,6 @@ export async function sendGroupInvitationEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || "no-reply@circlesave.com",
     subject,
     html,
   });
@@ -197,7 +247,6 @@ export async function sendWelcomeEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || "horebsaves@gmail.com",
     subject,
     html,
   });
@@ -233,7 +282,7 @@ export async function sendGroupCreatedEmail(
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
               <span style="font-weight: bold; color: #4b5563;">Contribution Amount:</span>
-              <span style="color: #059669; font-weight: bold;">$${contributionAmount}</span>
+              <span style="color: #059669; font-weight: bold;">£${contributionAmount}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
               <span style="font-weight: bold; color: #4b5563;">Payment Frequency:</span>
@@ -290,7 +339,6 @@ export async function sendGroupCreatedEmail(
 
   return sendEmail({
     to: userEmail,
-    from: process.env.FROM_EMAIL || "horebsaves@gmail.com",
     subject,
     html,
   });
