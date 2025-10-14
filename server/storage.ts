@@ -479,8 +479,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(groupMembers.userId, userId),
-          eq(groupMembers.isActive, true),
-          eq(groups.status, "active")
+          eq(groupMembers.isActive, true)
         )
       );
 
