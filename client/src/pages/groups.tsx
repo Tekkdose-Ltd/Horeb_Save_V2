@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +8,13 @@ import { CreateGroupModal } from "@/components/CreateGroupModal";
 import { GroupCard } from "@/components/GroupCard";
 import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function Groups() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   const { data: myGroups, isLoading: myGroupsLoading } = useQuery({
     queryKey: ["/api/groups/my"],
@@ -21,6 +24,28 @@ export default function Groups() {
   const { data: publicGroups, isLoading: publicGroupsLoading } = useQuery({
     queryKey: ["/api/groups/public"],
     retry: false,
+  });
+
+  const joinGroupMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      return await apiRequest("POST", `/api/groups/${groupId}/join`);
+    },
+    onSuccess: (data, groupId) => {
+      toast({
+        title: "Success",
+        description: "You have successfully joined the group!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/public"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}`] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to join group",
+        variant: "destructive",
+      });
+    },
   });
 
   const filteredPublicGroups = publicGroups?.filter((group: any) =>
@@ -162,10 +187,11 @@ export default function Groups() {
                           </div>
                           <Button 
                             size="sm"
-                            disabled={group.memberCount >= group.maxMembers}
+                            onClick={() => joinGroupMutation.mutate(group.id)}
+                            disabled={group.memberCount >= group.maxMembers || joinGroupMutation.isPending}
                             data-testid={`button-join-group-${group.id}`}
                           >
-                            {group.memberCount >= group.maxMembers ? 'Full' : 'Join Group'}
+                            {joinGroupMutation.isPending ? 'Joining...' : group.memberCount >= group.maxMembers ? 'Full' : 'Join Group'}
                           </Button>
                         </div>
                       </div>
