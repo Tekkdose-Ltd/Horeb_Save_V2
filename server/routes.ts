@@ -11,6 +11,11 @@ import {
 } from "./services/emailService";
 import { insertGroupSchema, insertGroupMemberSchema } from "@shared/schema";
 import { z } from "zod";
+import Stripe from "stripe";
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-08-27.basil",
+}) : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -223,6 +228,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/groups/:id/members", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const group = await storage.getGroupWithMembers(groupId);
+
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      // Check if user is member or creator
+      const userId = req.user.claims.sub;
+      const isMember = group.members.some((member) => member.userId === userId);
+      const isCreator = group.creatorId === userId;
+
+      if (!isMember && !isCreator && !group.isPublic) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(group.members);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ message: "Failed to fetch group members" });
+    }
+  });
+
   app.post("/api/groups/:id/invite", isAuthenticated, async (req: any, res) => {
     try {
       const groupId = req.params.id;
@@ -263,6 +293,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending invitation:", error);
       res.status(500).json({ message: "Failed to send invitation" });
+    }
+  });
+
+  app.post("/api/groups/:id/activate", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const userId = req.user.claims.sub;
+
+      const group = await storage.getGroupWithMembers(groupId);
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      if (group.creatorId !== userId) {
+        return res
+          .status(403)
+          .json({ message: "Only group creator can activate the group" });
+      }
+
+      if (group.status !== 'draft') {
+        return res.status(400).json({ message: "Group is not in draft status" });
+      }
+
+      if (group.members.length < 2) {
+        return res.status(400).json({ message: "Group must have at least 2 members to activate" });
+      }
+
+      await groupService.startGroup(groupId);
+      res.json({ message: "Group activated successfully" });
+    } catch (error) {
+      console.error("Error activating group:", error);
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "Failed to activate group",
+      });
+    }
+  });
+
+  app.delete("/api/groups/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const userId = req.user.claims.sub;
+
+      const group = await storage.getGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      if (group.creatorId !== userId) {
+        return res
+          .status(403)
+          .json({ message: "Only group creator can delete the group" });
+      }
+
+      if (group.status !== 'draft') {
+        return res
+          .status(400)
+          .json({ message: "Only draft groups can be deleted" });
+      }
+
+      await storage.deleteGroup(groupId);
+      res.json({ message: "Group deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      res.status(500).json({ message: "Failed to delete group" });
     }
   });
 
@@ -398,6 +492,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user contributions:", error);
       res.status(500).json({ message: "Failed to fetch contributions" });
+    }
+  });
+
+  // Payment Methods routes
+  app.post("/api/create-setup-intent", isAuthenticated, async (req: any, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get or create Stripe customer
+      let customerId = user.stripeCustomerId;
+      if (!customerId && user.email) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`.trim(),
+        });
+        customerId = customer.id;
+        await storage.updateUserStripeCustomerId(userId, customerId);
+      }
+
+      if (!customerId) {
+        return res.status(400).json({ message: "Unable to create Stripe customer" });
+      }
+
+      // Create setup intent
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+      });
+
+      res.json({ clientSecret: setupIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating setup intent:", error);
+      res.status(500).json({ message: "Failed to create setup intent" });
+    }
+  });
+
+  app.get("/api/payment-methods", isAuthenticated, async (req: any, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || !user.stripeCustomerId) {
+        return res.json([]);
+      }
+
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: user.stripeCustomerId,
+        type: 'card',
+      });
+
+      res.json(paymentMethods.data);
+    } catch (error: any) {
+      console.error("Error fetching payment methods:", error);
+      res.status(500).json({ message: "Failed to fetch payment methods" });
+    }
+  });
+
+  app.delete("/api/payment-methods/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const paymentMethodId = req.params.id;
+      await stripe.paymentMethods.detach(paymentMethodId);
+
+      res.json({ message: "Payment method removed" });
+    } catch (error: any) {
+      console.error("Error removing payment method:", error);
+      res.status(500).json({ message: "Failed to remove payment method" });
+    }
+  });
+
+  // Session management routes
+  app.get("/api/sessions", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentSessionId = req.sessionID;
+      const userId = req.user.claims.sub;
+
+      const sessions = await storage.getUserSessions(userId);
+      
+      const sessionList = sessions.map((session: any) => ({
+        sid: session.sid,
+        lastActive: session.expire,
+        isCurrent: session.sid === currentSessionId,
+      }));
+
+      res.json(sessionList);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  });
+
+  app.post("/api/auth/logout-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Delete all user sessions from database
+      await storage.deleteUserSessions(userId);
+      
+      // Destroy current session
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Failed to logout" });
+        }
+        res.json({ message: "All sessions logged out successfully" });
+      });
+    } catch (error) {
+      console.error("Error logging out all sessions:", error);
+      res.status(500).json({ message: "Failed to logout all sessions" });
     }
   });
 

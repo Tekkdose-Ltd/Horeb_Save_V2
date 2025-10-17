@@ -67,7 +67,11 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: CreateGroupFormData) => {
-      const response = await apiRequest("POST", "/api/groups", data);
+      const response = await apiRequest("POST", "/api/groups", {
+        ...data,
+        contributionAmount: data.contributionAmount.toString(),
+        totalRounds: data.maxMembers,
+      });
       return response.json();
     },
     onSuccess: (group) => {
@@ -196,7 +200,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                 name="contributionAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contribution Amount ($)</FormLabel>
+                    <FormLabel>Contribution Amount (£)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 

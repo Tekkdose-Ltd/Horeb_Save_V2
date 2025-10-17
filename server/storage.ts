@@ -5,6 +5,7 @@ import {
   contributions,
   transactions,
   notifications,
+  sessions,
   type User,
   type UpsertUser,
   type Group,
@@ -100,6 +101,10 @@ export interface IStorage {
     nextPayoutAmount: number;
     nextPayoutRecipient: string | null;
   }>;
+
+  // Session operations
+  getUserSessions(userId: string): Promise<any[]>;
+  deleteUserSessions(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -205,10 +210,6 @@ export class DatabaseStorage implements IStorage {
       })
       .from(groups)
       .innerJoin(groupMembers, eq(groups.id, groupMembers.groupId))
-      .leftJoin(
-        sql`(SELECT group_id, COUNT(*) as member_count FROM group_members WHERE is_active = true GROUP BY group_id)`,
-        sql`members_count.group_id = groups.id`
-      )
       .where(
         and(eq(groupMembers.userId, userId), eq(groupMembers.isActive, true))
       )
@@ -478,8 +479,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(groupMembers.userId, userId),
-          eq(groupMembers.isActive, true),
-          eq(groups.status, "active")
+          eq(groupMembers.isActive, true)
         )
       );
 
@@ -541,6 +541,23 @@ export class DatabaseStorage implements IStorage {
         Number(group.contributionAmount) * (group.maxMembers || 1),
       nextPayoutRecipient: nextRecipient[0]?.users.id || null,
     };
+  }
+
+  // Session operations
+  async getUserSessions(userId: string): Promise<any[]> {
+    const userSessions = await db
+      .select()
+      .from(sessions)
+      .where(sql`${sessions.sess}::jsonb->'passport'->'user'->'claims'->>'sub' = ${userId}`)
+      .orderBy(desc(sessions.expire));
+
+    return userSessions;
+  }
+
+  async deleteUserSessions(userId: string): Promise<void> {
+    await db
+      .delete(sessions)
+      .where(sql`${sessions.sess}::jsonb->'passport'->'user'->'claims'->>'sub' = ${userId}`);
   }
 }
 

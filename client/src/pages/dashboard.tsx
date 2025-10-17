@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -10,7 +10,8 @@ import { CreateGroupModal } from "@/components/CreateGroupModal";
 import { GroupCard } from "@/components/GroupCard";
 import { TrustScore } from "@/components/TrustScore";
 import { ActivityFeed } from "@/components/ActivityFeed";
-import { Users, DollarSign, Clock, Star, Plus, Bell } from "lucide-react";
+import { Users, PoundSterling, Clock, Star, Plus, Bell } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -55,6 +56,29 @@ export default function Dashboard() {
   const { data: notifications } = useQuery({
     queryKey: ["/api/notifications"],
     retry: false,
+  });
+
+  const joinGroupMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      return await apiRequest("POST", `/api/groups/${groupId}/join`);
+    },
+    onSuccess: (data, groupId) => {
+      toast({
+        title: "Success",
+        description: "You have successfully joined the group!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups/public"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to join group",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading || !isAuthenticated) {
@@ -118,7 +142,7 @@ export default function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                    <DollarSign className="text-secondary text-xl" />
+                    <PoundSterling className="text-secondary text-xl" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Total Saved</p>
@@ -265,8 +289,14 @@ export default function Dashboard() {
                         <div className="text-sm text-muted-foreground">
                           {group.maxMembers - group.memberCount} spots left
                         </div>
-                        <Button variant="outline" size="sm" data-testid={`button-join-group-${group.id}`}>
-                          Join Group
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => joinGroupMutation.mutate(group.id)}
+                          disabled={group.memberCount >= group.maxMembers || joinGroupMutation.isPending}
+                          data-testid={`button-join-group-${group.id}`}
+                        >
+                          {joinGroupMutation.isPending ? 'Joining...' : 'Join Group'}
                         </Button>
                       </div>
                     </div>
@@ -296,7 +326,7 @@ export default function Dashboard() {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           transaction.type === 'contribution' ? 'bg-destructive/10' : 'bg-secondary/10'
                         }`}>
-                          <DollarSign className={`text-xs ${
+                          <PoundSterling className={`text-xs ${
                             transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
                           }`} />
                         </div>
