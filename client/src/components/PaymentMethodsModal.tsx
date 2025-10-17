@@ -53,11 +53,12 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
       return;
     }
 
-    const paymentElement = elements.getElement("payment");
+    const paymentElement = elements.getElement(PaymentElement);
     if (!paymentElement) {
       toast({
         title: "Error",
-        description: "Payment form not ready. Please wait a moment and try again.",
+        description:
+          "Payment form not ready. Please wait a moment and try again.",
         variant: "destructive",
       });
       return;
@@ -65,29 +66,35 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
 
     setIsProcessing(true);
 
-    try {
-      const { error } = await stripe.confirmSetup({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + "/profile",
-        },
-        redirect: "if_required",
-      });
+  try {
+    const { setupIntent, error } = await stripe.confirmSetup({
+      elements,
+      confirmParams: { return_url: window.location.origin + "/profile" },
+      redirect: "if_required",
+    });
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to add payment method",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Payment method added successfully",
-        });
-        onSuccess();
-      }
+    if (error) {
+      console.error("Setup Intent Error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add payment method",
+        variant: "destructive",
+      });
+    } else if (setupIntent?.status === "succeeded") {
+      toast({
+        title: "Success",
+        description: "Payment method added successfully",
+      });
+      onSuccess();
+    } else {
+      console.log("Setup Intent result:", setupIntent);
+      toast({
+        title: "Info",
+        description: "Payment setup is pending confirmation.",
+      });
+    }
     } catch (err) {
+      console.error("Unexpected setup error:", err);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -147,33 +154,50 @@ export function PaymentMethodsModal({
     data: paymentMethods = [],
     isLoading,
     error,
+    refetch,
   } = useQuery<PaymentMethod[]>({
     queryKey: ["/api/payment-methods"],
     enabled: isOpen,
     retry: (failureCount, error: any) => {
+      console.log("Payment methods query error:", error);
       if (error?.status === 401 || error?.message?.includes("Unauthorized")) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2; // Reduce retry attempts
     },
     retryDelay: 1000,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
+
+  // Debug logging - moved after useQuery hook
+  useEffect(() => {
+    if (isOpen) {
+      console.log("Payment methods modal opened");
+      console.log("Loading state:", isLoading);
+      console.log("Error state:", error);
+      console.log("Payment methods:", paymentMethods);
+    }
+  }, [isOpen, isLoading, error, paymentMethods]);
 
   const createSetupIntentMutation = useMutation({
     mutationFn: async () => {
+      console.log("Creating setup intent...");
       const response = await apiRequest("POST", "/api/create-setup-intent");
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Setup intent created:", data);
       setClientSecret(data.clientSecret);
       setShowAddForm(true);
     },
     onError: (error: any) => {
       console.error("Failed to create setup intent:", error);
-      const message = error?.status === 401
-        ? "Please log in to add payment methods."
-        : "Failed to initialize payment setup. Please try again.";
-      
+      const message =
+        error?.status === 401
+          ? "Please log in to add payment methods."
+          : "Failed to initialize payment setup. Please try again.";
+
       toast({
         title: error?.status === 401 ? "Authentication Required" : "Error",
         description: message,
@@ -244,10 +268,16 @@ export function PaymentMethodsModal({
                       ? "Please log in to manage payment methods"
                       : "Failed to load payment methods"}
                   </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Error details: {(error as any)?.message || "Unknown error"}
+                  </p>
                   {(error as any)?.status !== 401 && (
                     <Button
                       variant="outline"
-                      onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/payment-methods"] })}
+                      onClick={() => {
+                        console.log("Manually retrying payment methods fetch");
+                        refetch();
+                      }}
                       className="mb-4"
                     >
                       Try Again
@@ -307,7 +337,9 @@ export function PaymentMethodsModal({
                 data-testid="button-show-add-form"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                {createSetupIntentMutation.isPending ? "Initializing..." : "Add Payment Method"}
+                {createSetupIntentMutation.isPending
+                  ? "Initializing..."
+                  : "Add Payment Method"}
               </Button>
             </>
           ) : (
