@@ -47,8 +47,8 @@ export class GroupService {
     await storage.createNotification({
       userId: nextRecipient.userId,
       groupId: group.id,
-      type: 'payout_ready',
-      title: 'Payout Ready!',
+      type: "payout_ready",
+      title: "Payout Ready!",
       message: `Your payout of £${payoutAmount} from ${group.name} is ready.`,
     });
 
@@ -65,13 +65,16 @@ export class GroupService {
 
     // Update group for next round
     await storage.updateGroup(groupId, {
-      currentRound: group.currentRound + 1,
+      currentRound: (group.currentRound ?? 0) + 1,
       nextPayoutDate: this.calculateNextPayoutDate(group),
     });
 
     // Create contributions for next round if not the last round
-    if (group.currentRound < group.totalRounds) {
-      await this.createContributionsForRound(group, group.currentRound + 1);
+    if ((group.currentRound ?? 0) < group.totalRounds) {
+      await this.createContributionsForRound(
+        group,
+        (group.currentRound ?? 0) + 1
+      );
     }
   }
 
@@ -120,8 +123,8 @@ export class GroupService {
         await storage.createNotification({
           userId: user.id,
           groupId: group.id,
-          type: 'payment_due',
-          title: 'Payment Overdue',
+          type: "payment_due",
+          title: "Payment Overdue",
           message: `Your payment of £${contribution.amount} for ${group.name} is overdue.`,
         });
       }
