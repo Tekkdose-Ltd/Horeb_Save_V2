@@ -1,44 +1,55 @@
-import sgMail from '@sendgrid/mail';
+import sgMail from "@sendgrid/mail";
 
 let connectionSettings: any;
 
 async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? "repl " + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+    ? "depl " + process.env.WEB_REPL_RENEWAL
     : null;
 
   if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+    throw new Error("X_REPLIT_TOKEN not found for repl/depl");
   }
 
   connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
+    "https://" +
+      hostname +
+      "/api/v2/connection?include_secrets=true&connector_names=sendgrid",
     {
       headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
+        Accept: "application/json",
+        X_REPLIT_TOKEN: xReplitToken,
+      },
     }
-  ).then(res => res.json()).then(data => data.items?.[0]);
+  )
+    .then((res) => res.json())
+    .then((data) => data.items?.[0]);
 
-  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
-    throw new Error('SendGrid not connected');
+  if (
+    !connectionSettings ||
+    !connectionSettings.settings.api_key ||
+    !connectionSettings.settings.from_email
+  ) {
+    throw new Error("SendGrid not connected");
   }
-  return {apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email};
+  return {
+    apiKey: connectionSettings.settings.api_key,
+    email: connectionSettings.settings.from_email,
+  };
 }
 
 // WARNING: Never cache this client.
 // Access tokens expire, so a new client must be created each time.
 // Always call this function again to get a fresh client.
 async function getUncachableSendGridClient() {
-  const {apiKey, email} = await getCredentials();
+  const { apiKey, email } = await getCredentials();
   sgMail.setApiKey(apiKey);
   return {
     client: sgMail,
-    fromEmail: email
+    fromEmail: email,
   };
 }
 
@@ -53,52 +64,61 @@ interface EmailParams {
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
     const { client, fromEmail } = await getUncachableSendGridClient();
-    
+
     // Build email payload - only include text if it has content
     const emailPayload: any = {
       to: params.to,
       from: params.from || fromEmail,
       subject: params.subject,
     };
-    
+
     // Include html if provided
     if (params.html) {
       emailPayload.html = params.html;
     }
-    
+
     // Include text if provided, otherwise omit it entirely
     if (params.text && params.text.length > 0) {
       emailPayload.text = params.text;
     }
-    
+
     await client.send(emailPayload);
-    
+
     console.log(`Email sent successfully: ${params.subject} to ${params.to}`);
     return true;
   } catch (error: any) {
     console.error("SendGrid email error:", error);
-    
+
     // If SendGrid is not connected or connectors hostname is missing, just log the email (soft success)
-    if (error instanceof Error && (
-      error.message.includes('SendGrid not connected') ||
-      error.message.includes('X_REPLIT_TOKEN not found')
-    )) {
-      console.log("SendGrid not connected. Email would be sent:", params.subject, "to", params.to);
+    if (
+      error instanceof Error &&
+      (error.message.includes("SendGrid not connected") ||
+        error.message.includes("X_REPLIT_TOKEN not found"))
+    ) {
+      console.log(
+        "SendGrid not connected. Email would be sent:",
+        params.subject,
+        "to",
+        params.to
+      );
       return true; // Return true to not block the application
     }
-    
+
     // Log detailed error information for genuine send failures
     if (error?.response?.body) {
-      console.error("SendGrid API Response:", JSON.stringify(error.response.body, null, 2));
+      console.error(
+        "SendGrid API Response:",
+        JSON.stringify(error.response.body, null, 2)
+      );
     }
-    
+
     // Log the email that would have been sent
     console.log("Failed to send email. Email details:", {
       to: params.to,
       from: params.from,
-      subject: params.subject
+      subject: params.subject,
     });
-    
+
     // Return false for genuine send failures
     return false;
   }
@@ -286,7 +306,10 @@ export async function sendGroupCreatedEmail(
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
               <span style="font-weight: bold; color: #4b5563;">Payment Frequency:</span>
-              <span style="color: #1f2937; text-transform: capitalize;">${frequency.replace('-', ' ')}</span>
+              <span style="color: #1f2937; text-transform: capitalize;">${frequency.replace(
+                "-",
+                " "
+              )}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0;">
               <span style="font-weight: bold; color: #4b5563;">Maximum Members:</span>
@@ -318,7 +341,9 @@ export async function sendGroupCreatedEmail(
              style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; margin-right: 10px;">
             Manage Your Group
           </a>
-          <a href="${process.env.BASE_URL || "https://circlesave.com"}/dashboard" 
+          <a href="${
+            process.env.BASE_URL || "https://circlesave.com"
+          }/dashboard" 
              style="background-color: #059669; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             View Dashboard
           </a>
