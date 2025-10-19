@@ -1,0 +1,17 @@
+# Render Deployment Configuration
+# Create this file for Render.com deployment
+
+# Build settings
+buildCommand: npm install && npm run build
+startCommand: npm start
+
+# Environment
+env: node
+
+# Health check
+healthCheckPath: /api/health
+
+# Auto-scaling
+scaling:
+  minInstances: 1
+  maxInstances: 3

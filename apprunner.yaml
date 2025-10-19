@@ -1,0 +1,19 @@
+# AWS App Runner configuration
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "Building CircleTrust backend for AWS App Runner"
+      - npm ci
+      - npm run build
+run:
+  runtime-version: 18
+  command: npm start
+  network:
+    port: 8080
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: PORT
+      value: 8080
