@@ -8,6 +8,7 @@ import {
   sessions,
   type User,
   type UpsertUser,
+  type UpdateProfile,
   type Group,
   type InsertGroup,
   type GroupMember,
@@ -26,6 +27,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<{ user: User; isNewUser: boolean }>;
+  updateUserProfile(userId: string, profile: UpdateProfile): Promise<User>;
   updateUserTrustScore(userId: string, trustScore: number): Promise<void>;
   updateUserStripeCustomerId(
     userId: string,
@@ -144,6 +146,32 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ trustScore: trustScore.toString(), updatedAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  async updateUserProfile(userId: string, profile: UpdateProfile): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phoneNumber: profile.phoneNumber,
+        dateOfBirth: new Date(profile.dateOfBirth),
+        addressLine1: profile.addressLine1,
+        addressLine2: profile.addressLine2 || null,
+        city: profile.city,
+        postcode: profile.postcode,
+        country: profile.country,
+        profileCompleted: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
   }
 
   async updateUserStripeCustomerId(

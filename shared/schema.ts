@@ -33,6 +33,14 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  phoneNumber: varchar("phone_number"),
+  dateOfBirth: timestamp("date_of_birth"),
+  addressLine1: varchar("address_line_1"),
+  addressLine2: varchar("address_line_2"),
+  city: varchar("city"),
+  postcode: varchar("postcode"),
+  country: varchar("country").default('United Kingdom'),
+  profileCompleted: boolean("profile_completed").default(false),
   stripeCustomerId: varchar("stripe_customer_id"),
   trustScore: decimal("trust_score", { precision: 3, scale: 2 }).default('0.00'),
   totalGroupsCompleted: integer("total_groups_completed").default(0),
@@ -244,3 +252,23 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
 });
+
+// User profile update schema for onboarding
+export const updateProfileSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+  phoneNumber: z.string().min(10, "Please enter a valid phone number").max(20),
+  dateOfBirth: z.string().refine((date) => {
+    const birthDate = new Date(date);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    return age >= 18;
+  }, "You must be at least 18 years old"),
+  addressLine1: z.string().min(1, "Address is required").max(255),
+  addressLine2: z.string().max(255).optional(),
+  city: z.string().min(1, "City is required").max(100),
+  postcode: z.string().min(3, "Postcode is required").max(20),
+  country: z.string().min(1, "Country is required").max(100),
+});
+
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;

@@ -10,7 +10,7 @@ import {
   sendWelcomeEmail,
   sendGroupCreatedEmail,
 } from "./services/emailService";
-import { insertGroupSchema, insertGroupMemberSchema } from "@shared/schema";
+import { insertGroupSchema, insertGroupMemberSchema, updateProfileSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 
@@ -43,6 +43,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Update user profile (onboarding)
+  app.put("/api/auth/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profileData = updateProfileSchema.parse(req.body);
+      const updatedUser = await storage.updateUserProfile(userId, profileData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({
+          message: "Validation failed",
+          errors: error.issues,
+        });
+      } else {
+        res.status(500).json({ message: "Failed to update profile" });
+      }
     }
   });
 
