@@ -46,10 +46,13 @@ Preferred communication style: Simple, everyday language.
 - PostgreSQL session store for persistent authentication
 
 **Authentication & Authorization:**
-- Replit Auth integration with OpenID Connect/Passport strategy
+- Replit Auth integration with OpenID Connect/Passport strategy (OAuth 2.0)
+- Multiple OAuth providers supported: Google, GitHub, X (Twitter), Apple, Email/Password
 - Session management with connect-pg-simple for PostgreSQL-backed sessions
 - Custom `isAuthenticated` middleware for route protection
 - User profile management with automatic creation on first login
+- Mandatory onboarding flow for new users to complete profile
+- Profile completion check redirects incomplete profiles to onboarding page
 
 **API Design:**
 - RESTful endpoints organized by domain (groups, contributions, transactions, notifications)
@@ -65,7 +68,7 @@ Preferred communication style: Simple, everyday language.
 - Schema-first approach with Zod validation derived from Drizzle schemas
 
 **Core Data Models:**
-- **Users**: Profile information, trust scores, Stripe customer IDs, payment statistics
+- **Users**: Profile information (name, contact details, address), trust scores, Stripe customer IDs, payment statistics, profile completion status. Extended fields include phoneNumber, dateOfBirth, addressLine1, addressLine2, city, postcode, country for identity verification
 - **Groups**: Savings circle configuration (amount, frequency, status, member limits)
 - **Group Members**: Join status, payout tracking, position in rotation
 - **Contributions**: Individual payment records with status tracking
