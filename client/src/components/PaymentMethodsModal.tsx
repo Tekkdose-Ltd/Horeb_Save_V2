@@ -64,18 +64,9 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
       return;
     }
 
-    const paymentElement = elements.getElement("payment");
-    if (!paymentElement) {
-      toast({
-        title: "Error",
-        description:
-          "Payment form not ready. Please wait a moment and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setIsProcessing(true);
 
-  try {
+    try {
     const { setupIntent, error } = await stripe.confirmSetup({
       elements,
       confirmParams: { return_url: window.location.origin + "/profile" },
