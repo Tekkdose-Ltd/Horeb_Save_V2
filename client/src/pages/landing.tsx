@@ -544,6 +544,26 @@ export default function Landing() {
               </ul>
             </div>
 
+            {/* Support */}
+            <div className="space-y-4 text-center sm:text-left">
+              <h3 className="text-white font-semibold text-base sm:text-lg">
+                Support
+              </h3>
+              <ul className="space-y-2 sm:space-y-3">
+                <li>
+                  <a
+                    href="https://tally.so/r/mZpLoy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-300 hover:text-white transition-colors text-sm"
+                    data-testid="link-product-support"
+                  >
+                    Product Support
+                  </a>
+                </li>
+              </ul>
+            </div>
+
             {/* Social Links */}
             <div className="space-y-4 text-center sm:text-left">
               <h3 className="text-white font-semibold text-base sm:text-lg">
