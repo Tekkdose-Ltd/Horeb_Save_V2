@@ -318,7 +318,7 @@ export default function Landing() {
                 <CardContent className="p-0 h-full relative">
                   {/* Background image */}
                   <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat "
                     style={{
                       backgroundImage: "url('/images/transparent.png')",
                       backgroundSize: "cover",

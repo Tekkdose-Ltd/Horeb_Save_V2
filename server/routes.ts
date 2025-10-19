@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { devAuthMiddleware, mockDevUser } from "./devAuth";
 import { storage } from "./storage";
 import { groupService } from "./services/groupService";
 import { paymentService } from "./services/paymentService";
@@ -13,13 +14,25 @@ import { insertGroupSchema, insertGroupMemberSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
-}) : null;
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2025-08-27.basil",
+    })
+  : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Health check endpoint for deployment platforms
+  app.get("/api/health", (req, res) => {
+    res.json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      stripe_configured: !!process.env.STRIPE_SECRET_KEY,
+      database_configured: !!process.env.DATABASE_URL,
+    });
+  });
 
   // Auth routes
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
@@ -296,39 +309,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/groups/:id/activate", isAuthenticated, async (req: any, res) => {
-    try {
-      const groupId = req.params.id;
-      const userId = req.user.claims.sub;
+  app.post(
+    "/api/groups/:id/activate",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const groupId = req.params.id;
+        const userId = req.user.claims.sub;
 
-      const group = await storage.getGroupWithMembers(groupId);
-      if (!group) {
-        return res.status(404).json({ message: "Group not found" });
+        const group = await storage.getGroupWithMembers(groupId);
+        if (!group) {
+          return res.status(404).json({ message: "Group not found" });
+        }
+
+        if (group.creatorId !== userId) {
+          return res
+            .status(403)
+            .json({ message: "Only group creator can activate the group" });
+        }
+
+        if (group.status !== "draft") {
+          return res
+            .status(400)
+            .json({ message: "Group is not in draft status" });
+        }
+
+        if (group.members.length < 2) {
+          return res
+            .status(400)
+            .json({
+              message: "Group must have at least 2 members to activate",
+            });
+        }
+
+        await groupService.startGroup(groupId);
+        res.json({ message: "Group activated successfully" });
+      } catch (error) {
+        console.error("Error activating group:", error);
+        res.status(400).json({
+          message:
+            error instanceof Error ? error.message : "Failed to activate group",
+        });
       }
-
-      if (group.creatorId !== userId) {
-        return res
-          .status(403)
-          .json({ message: "Only group creator can activate the group" });
-      }
-
-      if (group.status !== 'draft') {
-        return res.status(400).json({ message: "Group is not in draft status" });
-      }
-
-      if (group.members.length < 2) {
-        return res.status(400).json({ message: "Group must have at least 2 members to activate" });
-      }
-
-      await groupService.startGroup(groupId);
-      res.json({ message: "Group activated successfully" });
-    } catch (error) {
-      console.error("Error activating group:", error);
-      res.status(400).json({
-        message: error instanceof Error ? error.message : "Failed to activate group",
-      });
     }
-  });
+  );
 
   app.delete("/api/groups/:id", isAuthenticated, async (req: any, res) => {
     try {
@@ -346,7 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Only group creator can delete the group" });
       }
 
-      if (group.status !== 'draft') {
+      if (group.status !== "draft") {
         return res
           .status(400)
           .json({ message: "Only draft groups can be deleted" });
@@ -496,87 +520,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payment Methods routes
-  app.post("/api/create-setup-intent", isAuthenticated, async (req: any, res) => {
-    try {
-      if (!stripe) {
-        return res.status(500).json({ message: "Stripe not configured" });
-      }
+  app.post(
+    "/api/create-setup-intent",
+    isAuthenticated,
+    async (req: any, res) => {
+      console.log("=== CREATE SETUP INTENT REQUEST ===");
+      try {
+        if (!stripe) {
+          console.error("Stripe not configured - missing STRIPE_SECRET_KEY");
+          return res.status(500).json({ message: "Stripe not configured" });
+        }
 
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+        const userId = req.user.claims.sub;
+        console.log("User ID:", userId);
 
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+        const user = await storage.getUser(userId);
+        console.log("User found:", user ? "YES" : "NO");
+        console.log(
+          "User details:",
+          user
+            ? {
+                id: user.id,
+                email: user.email,
+                stripeCustomerId: user.stripeCustomerId,
+              }
+            : "N/A"
+        );
 
-      // Get or create Stripe customer
-      let customerId = user.stripeCustomerId;
-      if (!customerId && user.email) {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`.trim(),
+        if (!user) {
+          console.error("User not found in database");
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        // Get or create Stripe customer
+        let customerId = user.stripeCustomerId;
+        console.log("Existing Stripe Customer ID:", customerId);
+
+        if (!customerId && user.email) {
+          console.log("Creating new Stripe customer for:", user.email);
+          const customer = await stripe.customers.create({
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`.trim(),
+          });
+          customerId = customer.id;
+          console.log("New Stripe Customer created:", customerId);
+          await storage.updateUserStripeCustomerId(userId, customerId);
+          console.log("Updated user with Stripe Customer ID");
+        }
+
+        if (!customerId) {
+          console.error("Unable to create or retrieve Stripe customer");
+          return res
+            .status(400)
+            .json({ message: "Unable to create Stripe customer" });
+        }
+
+        // Create setup intent
+        console.log("Creating setup intent for customer:", customerId);
+        const setupIntent = await stripe.setupIntents.create({
+          customer: customerId,
+          payment_method_types: ["card"],
         });
-        customerId = customer.id;
-        await storage.updateUserStripeCustomerId(userId, customerId);
+
+        console.log("Setup intent created successfully:", setupIntent.id);
+        res.json({ clientSecret: setupIntent.client_secret });
+      } catch (error: any) {
+        console.error("Error creating setup intent:", error);
+        console.error("Error stack:", error.stack);
+        res
+          .status(500)
+          .json({
+            message: "Failed to create setup intent",
+            error: error.message,
+          });
       }
-
-      if (!customerId) {
-        return res.status(400).json({ message: "Unable to create Stripe customer" });
-      }
-
-      // Create setup intent
-      const setupIntent = await stripe.setupIntents.create({
-        customer: customerId,
-        payment_method_types: ['card'],
-      });
-
-      res.json({ clientSecret: setupIntent.client_secret });
-    } catch (error: any) {
-      console.error("Error creating setup intent:", error);
-      res.status(500).json({ message: "Failed to create setup intent" });
     }
-  });
+  );
 
   app.get("/api/payment-methods", isAuthenticated, async (req: any, res) => {
+    console.log("=== GET PAYMENT METHODS REQUEST ===");
     try {
       if (!stripe) {
+        console.error("Stripe not configured - missing STRIPE_SECRET_KEY");
         return res.status(500).json({ message: "Stripe not configured" });
       }
 
       const userId = req.user.claims.sub;
+      console.log("User ID:", userId);
+
       const user = await storage.getUser(userId);
+      console.log("User found:", user ? "YES" : "NO");
+      console.log("User Stripe Customer ID:", user?.stripeCustomerId);
 
       if (!user || !user.stripeCustomerId) {
+        console.log("No user or no Stripe customer ID - returning empty array");
         return res.json([]);
       }
 
+      console.log(
+        "Fetching payment methods for customer:",
+        user.stripeCustomerId
+      );
       const paymentMethods = await stripe.paymentMethods.list({
         customer: user.stripeCustomerId,
-        type: 'card',
+        type: "card",
       });
+
+      console.log("Payment methods found:", paymentMethods.data.length);
+      console.log(
+        "Payment methods details:",
+        paymentMethods.data.map((pm) => ({
+          id: pm.id,
+          type: pm.type,
+          card: pm.card ? { brand: pm.card.brand, last4: pm.card.last4 } : null,
+        }))
+      );
 
       res.json(paymentMethods.data);
     } catch (error: any) {
       console.error("Error fetching payment methods:", error);
-      res.status(500).json({ message: "Failed to fetch payment methods" });
+      console.error("Error stack:", error.stack);
+      res
+        .status(500)
+        .json({
+          message: "Failed to fetch payment methods",
+          error: error.message,
+        });
     }
   });
 
-  app.delete("/api/payment-methods/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      if (!stripe) {
-        return res.status(500).json({ message: "Stripe not configured" });
+  app.delete(
+    "/api/payment-methods/:id",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        if (!stripe) {
+          return res.status(500).json({ message: "Stripe not configured" });
+        }
+
+        const paymentMethodId = req.params.id;
+        await stripe.paymentMethods.detach(paymentMethodId);
+
+        res.json({ message: "Payment method removed" });
+      } catch (error: any) {
+        console.error("Error removing payment method:", error);
+        res.status(500).json({ message: "Failed to remove payment method" });
       }
-
-      const paymentMethodId = req.params.id;
-      await stripe.paymentMethods.detach(paymentMethodId);
-
-      res.json({ message: "Payment method removed" });
-    } catch (error: any) {
-      console.error("Error removing payment method:", error);
-      res.status(500).json({ message: "Failed to remove payment method" });
     }
-  });
+  );
 
   // Session management routes
   app.get("/api/sessions", isAuthenticated, async (req: any, res) => {
@@ -585,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
 
       const sessions = await storage.getUserSessions(userId);
-      
+
       const sessionList = sessions.map((session: any) => ({
         sid: session.sid,
         lastActive: session.expire,
@@ -602,10 +693,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout-all", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      
+
       // Delete all user sessions from database
       await storage.deleteUserSessions(userId);
-      
+
       // Destroy current session
       req.session.destroy((err: any) => {
         if (err) {

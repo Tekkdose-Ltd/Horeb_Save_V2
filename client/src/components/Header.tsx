@@ -9,7 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users, Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
+import { HorebSaveLogoSmall } from "@/components/HorebSaveLogo";
 
 export function Header() {
   const [location] = useLocation();
@@ -58,10 +59,8 @@ export function Header() {
               className="flex items-center space-x-2"
               data-testid="link-home"
             >
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="text-primary-foreground text-lg" />
-              </div>
-              <h1 className="text-xl font-bold text-foreground">CircleSave</h1>
+              <HorebSaveLogoSmall className="w-10 h-10" />
+              <h1 className="text-xl font-bold text-foreground">Horeb Save</h1>
             </Link>
           </div>
 

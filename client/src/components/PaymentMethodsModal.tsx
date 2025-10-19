@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import {
+  useStripe,
+  useElements,
+  PaymentElement,
+  Elements,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -16,60 +20,104 @@ import { Card } from "@/components/ui/card";
 import { CreditCard, Trash2, Plus } from "lucide-react";
 
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+  throw new Error("Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY");
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+interface PaymentMethod {
+  id: string;
+  card?: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  };
+}
 
 function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
+      toast({
+        title: "Error",
+        description: "Payment system not ready. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const paymentElement = elements.getElement("payment");
+    if (!paymentElement) {
+      toast({
+        title: "Error",
+        description:
+          "Payment form not ready. Please wait a moment and try again.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsProcessing(true);
 
-    const { error } = await stripe.confirmSetup({
-      elements,
-      confirmParams: {
-        return_url: window.location.origin + '/profile',
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { error } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin + "/profile",
+        },
+        redirect: "if_required",
+      });
 
-    setIsProcessing(false);
-
-    if (error) {
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add payment method",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Payment method added successfully",
+        });
+        onSuccess();
+      }
+    } catch (err) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Payment method added successfully",
-      });
-      onSuccess();
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!stripe || isProcessing}
+      <PaymentElement
+        onReady={() => setIsReady(true)}
+        options={{
+          layout: "tabs",
+        }}
+      />
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={!stripe || !elements || isProcessing || !isReady}
         data-testid="button-add-payment-method"
       >
-        {isProcessing ? "Processing..." : "Add Payment Method"}
+        {!isReady
+          ? "Loading..."
+          : isProcessing
+          ? "Processing..."
+          : "Add Payment Method"}
       </Button>
     </form>
   );
@@ -80,30 +128,84 @@ interface PaymentMethodsModalProps {
   onClose: () => void;
 }
 
-export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProps) {
+export function PaymentMethodsModal({
+  isOpen,
+  onClose,
+}: PaymentMethodsModalProps) {
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
 
-  const { data: paymentMethods, isLoading } = useQuery({
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAddForm(false);
+      setClientSecret("");
+    }
+  }, [isOpen]);
+
+  const {
+    data: paymentMethods = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<PaymentMethod[]>({
     queryKey: ["/api/payment-methods"],
     enabled: isOpen,
+    retry: (failureCount, error: any) => {
+      console.log("Payment methods query error:", error);
+      if (error?.status === 401 || error?.message?.includes("Unauthorized")) {
+        return false;
+      }
+      return failureCount < 2; // Reduce retry attempts
+    },
+    retryDelay: 1000,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
+
+  // Debug logging - moved after useQuery hook
+  useEffect(() => {
+    if (isOpen) {
+      console.log("Payment methods modal opened");
+      console.log("Loading state:", isLoading);
+      console.log("Error state:", error);
+      console.log("Payment methods:", paymentMethods);
+    }
+  }, [isOpen, isLoading, error, paymentMethods]);
 
   const createSetupIntentMutation = useMutation({
     mutationFn: async () => {
+      console.log("Creating setup intent...");
       const response = await apiRequest("POST", "/api/create-setup-intent");
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Setup intent created:", data);
       setClientSecret(data.clientSecret);
       setShowAddForm(true);
+    },
+    onError: (error: any) => {
+      console.error("Failed to create setup intent:", error);
+      const message =
+        error?.status === 401
+          ? "Please log in to add payment methods."
+          : "Failed to initialize payment setup. Please try again.";
+
+      toast({
+        title: error?.status === 401 ? "Authentication Required" : "Error",
+        description: message,
+        variant: "destructive",
+      });
     },
   });
 
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (paymentMethodId: string) => {
-      const response = await apiRequest("DELETE", `/api/payment-methods/${paymentMethodId}`);
+      const response = await apiRequest(
+        "DELETE",
+        `/api/payment-methods/${paymentMethodId}`
+      );
       return response.json();
     },
     onSuccess: () => {
@@ -113,11 +215,14 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
         description: "Payment method removed",
       });
     },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove payment method. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
-
-  const handleAddPaymentMethod = () => {
-    createSetupIntentMutation.mutate();
-  };
 
   const handleSuccess = () => {
     setShowAddForm(false);
@@ -125,14 +230,19 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
     queryClient.invalidateQueries({ queryKey: ["/api/payment-methods"] });
   };
 
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setClientSecret("");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl" data-testid="modal-payment-methods">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage Payment Methods</DialogTitle>
-          <DialogDescription>
-            Add or remove payment methods for your contributions.
-          </DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Payment Methods
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -142,9 +252,35 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
                 </div>
-              ) : paymentMethods && paymentMethods.length > 0 ? (
+              ) : error ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="w-8 h-8 text-red-500" />
+                  </div>
+                  <p className="text-red-600 mb-4">
+                    {(error as any)?.status === 401
+                      ? "Please log in to manage payment methods"
+                      : "Failed to load payment methods"}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Error details: {(error as any)?.message || "Unknown error"}
+                  </p>
+                  {(error as any)?.status !== 401 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        console.log("Manually retrying payment methods fetch");
+                        refetch();
+                      }}
+                      className="mb-4"
+                    >
+                      Try Again
+                    </Button>
+                  )}
+                </div>
+              ) : paymentMethods.length > 0 ? (
                 <div className="space-y-3">
-                  {paymentMethods.map((method: any) => (
+                  {paymentMethods.map((method) => (
                     <Card key={method.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
@@ -153,17 +289,21 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
                           </div>
                           <div>
                             <p className="font-medium">
-                              {method.card?.brand?.toUpperCase()} •••• {method.card?.last4}
+                              {method.card?.brand?.toUpperCase()} ••••{" "}
+                              {method.card?.last4}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Expires {method.card?.exp_month}/{method.card?.exp_year}
+                              Expires {method.card?.exp_month}/
+                              {method.card?.exp_year}
                             </p>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deletePaymentMethodMutation.mutate(method.id)}
+                          onClick={() =>
+                            deletePaymentMethodMutation.mutate(method.id)
+                          }
                           disabled={deletePaymentMethodMutation.isPending}
                           data-testid={`button-delete-${method.id}`}
                         >
@@ -178,18 +318,22 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                     <CreditCard className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground mb-4">No payment methods added yet</p>
+                  <p className="text-muted-foreground mb-4">
+                    No payment methods added yet
+                  </p>
                 </div>
               )}
 
-              <Button 
-                onClick={handleAddPaymentMethod} 
+              <Button
+                onClick={() => createSetupIntentMutation.mutate()}
                 className="w-full"
                 disabled={createSetupIntentMutation.isPending}
                 data-testid="button-show-add-form"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Payment Method
+                {createSetupIntentMutation.isPending
+                  ? "Initializing..."
+                  : "Add Payment Method"}
               </Button>
             </>
           ) : (
@@ -203,12 +347,9 @@ export function PaymentMethodsModal({ isOpen, onClose }: PaymentMethodsModalProp
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
                 </div>
               )}
-              <Button 
-                variant="ghost" 
-                onClick={() => {
-                  setShowAddForm(false);
-                  setClientSecret("");
-                }}
+              <Button
+                variant="ghost"
+                onClick={handleCancel}
                 className="w-full mt-4"
                 data-testid="button-cancel-add"
               >
