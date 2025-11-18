@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { HorebSaveLogo } from "@/components/HorebSaveLogo";
 import { HeroSavingsImage } from "@/components/HeroSavingsImage";
+import { WaitlistModal } from "@/components/WaitlistModal";
 import { useEffect, useState } from "react";
 
 function HowItWorksCarousel() {
@@ -83,6 +84,8 @@ function HowItWorksCarousel() {
 }
 
 export default function Landing() {
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+
   return (
     <div>
       {/* Hero Section with Header */}
@@ -124,20 +127,25 @@ export default function Landing() {
                 </a>
               </div>
 
-              {/* Get Started Button */}
-              <Button
-                asChild
-                data-testid="button-login"
+              {/* Join Waitlist Button */}
+              {/* <Button
+                onClick={() => setWaitlistOpen(true)}
+                data-testid="button-join-waitlist"
                 className="bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
                 size="sm"
               >
-                <a
-                  href="/api/login"
-                  className="flex items-center space-x-1 sm:space-x-2"
-                >
-                  <span>Get Started</span>
-                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                </a>
+                <span>Join Waitlist</span>
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+              </Button> */}
+               {/* Get Started Button */}
+                <Button
+                data-testid="button-get-started"
+                className="bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
+                size="sm"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
               </Button>
             </div>
           </div>
@@ -164,11 +172,11 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Button
                   size="lg"
-                  asChild
+                  onClick={() => setWaitlistOpen(true)}
                   className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
-                  data-testid="button-start-saving"
+                  data-testid="button-get-started-hero"
                 >
-                  <a href="/api/login">Start Saving Today</a>
+                  <a href="/dashboard">Get Started</a>
                 </Button>
                 <Button
                   variant="outline"
@@ -454,17 +462,11 @@ export default function Landing() {
                 <div className="flex justify-center lg:justify-end">
                   <Button
                     size="lg"
-                    asChild
                     className="bg-white text-black hover:bg-gray-100 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center space-x-2 shadow-lg w-full sm:w-auto max-w-xs"
-                    data-testid="button-join-now"
+                    data-testid="button-join-waitlist-cta"
                   >
-                    <a
-                      href="/api/login"
-                      className="flex items-center space-x-2"
-                    >
-                      <span>Join Now - It's Free</span>
-                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </a>
+                    <span>Join Waitlist</span>
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
               </div>
@@ -659,6 +661,12 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal 
+        isOpen={waitlistOpen} 
+        onClose={() => setWaitlistOpen(false)} 
+      />
     </div>
   );
 }

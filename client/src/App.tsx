@@ -20,7 +20,10 @@ function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Redirect to onboarding if profile is incomplete
+  // In development mode, allow access to all pages
+  const isDev = import.meta.env.DEV;
+
+  // Redirect to onboarding if profile is incomplete (only when authenticated)
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       // Check if profile is incomplete and not already on onboarding page
@@ -36,22 +39,16 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/onboarding" component={Onboarding} />
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/groups" component={Groups} />
-          <Route path="/groups/:id" component={GroupDetails} />
-          <Route path="/groups/:id/manage" component={ManageGroup} />
-          <Route path="/transactions" component={Transactions} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/notifications" component={Notifications} />
-        </>
-      )}
-      <Route component={NotFound} />
+      <Route path="/" component={Landing} />
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/groups" component={Groups} />
+      <Route path="/groups/:id/manage" component={ManageGroup} />
+      <Route path="/groups/:id" component={GroupDetails} />
+      <Route path="/transactions" component={Transactions} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/notifications" component={Notifications} />
+      <Route path="/:rest*" component={NotFound} />
     </Switch>
   );
 }

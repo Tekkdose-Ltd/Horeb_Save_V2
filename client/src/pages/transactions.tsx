@@ -68,16 +68,16 @@ export default function Transactions() {
     }
   };
 
-  const filteredTransactions = transactions?.filter((transaction: any) => {
+  const filteredTransactions = Array.isArray(transactions) ? transactions.filter((transaction: any) => {
     if (filter === "all") return true;
     return transaction.type === filter;
-  }) || [];
+  }) : [];
 
-  const totalContributed = transactions?.reduce((sum: number, t: any) => 
-    t.type === 'contribution' ? sum + Number(t.amount) : sum, 0) || 0;
+  const totalContributed = Array.isArray(transactions) ? transactions.reduce((sum: number, t: any) => 
+    t.type === 'contribution' ? sum + Number(t.amount) : sum, 0) : 0;
 
-  const totalReceived = transactions?.reduce((sum: number, t: any) => 
-    t.type === 'payout' ? sum + Number(t.amount) : sum, 0) || 0;
+  const totalReceived = Array.isArray(transactions) ? transactions.reduce((sum: number, t: any) => 
+    t.type === 'payout' ? sum + Number(t.amount) : sum, 0) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -272,7 +272,7 @@ export default function Transactions() {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-6">Contribution Schedule</h2>
 
-                {contributions && contributions.length > 0 ? (
+                {Array.isArray(contributions) && contributions.length > 0 ? (
                   <div className="space-y-4">
                     {contributions.map((contribution: any) => (
                       <div 

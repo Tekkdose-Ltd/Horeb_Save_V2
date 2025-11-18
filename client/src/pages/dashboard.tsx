@@ -90,7 +90,7 @@ export default function Dashboard() {
   }
 
   const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User' : 'User';
-  const unreadNotifications = notifications?.filter((n: any) => !n.isRead).length || 0;
+  const unreadNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => !n.isRead).length : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,7 +106,7 @@ export default function Dashboard() {
                   Welcome back, {userName}!
                 </h2>
                 <p className="text-white/90">
-                  You have {stats?.activeGroups || 0} active groups and £{stats?.totalSaved || 0} in contributions this month.
+                  You have {typeof stats === 'object' && stats !== null && 'activeGroups' in stats ? (stats as any).activeGroups : 0} active groups and £{typeof stats === 'object' && stats !== null && 'totalSaved' in stats ? (stats as any).totalSaved : 0} in contributions this month.
                 </p>
               </div>
               <Button 
@@ -131,7 +131,7 @@ export default function Dashboard() {
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Active Groups</p>
                     <p className="text-2xl font-bold" data-testid="text-active-groups-count">
-                      {statsLoading ? '...' : stats?.activeGroups || 0}
+                      {statsLoading ? '...' : (typeof stats === 'object' && stats !== null && 'activeGroups' in stats ? (stats as any).activeGroups : 0)}
                     </p>
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function Dashboard() {
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Total Saved</p>
                     <p className="text-2xl font-bold" data-testid="text-total-saved">
-                      £{statsLoading ? '...' : stats?.totalSaved || 0}
+                      £{statsLoading ? '...' : (typeof stats === 'object' && stats !== null && 'totalSaved' in stats ? (stats as any).totalSaved : 0)}
                     </p>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export default function Dashboard() {
                   <div className="ml-4">
                     <p className="text-sm text-muted-foreground">Trust Score</p>
                     <p className="text-2xl font-bold text-secondary" data-testid="text-trust-score">
-                      {statsLoading ? '...' : (stats?.trustScore || 0).toFixed(1)}
+                      {statsLoading ? '...' : (typeof stats === 'object' && stats !== null && 'trustScore' in stats ? ((stats as any).trustScore || 0).toFixed(1) : '0.0')}
                     </p>
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : groups && groups.length > 0 ? (
+                  ) : Array.isArray(groups) && groups.length > 0 ? (
                     groups.map((group: any) => (
                       <GroupCard key={group.id} group={group} />
                     ))
@@ -260,10 +260,10 @@ export default function Dashboard() {
             )}
 
             {/* Recent Activity */}
-            <ActivityFeed transactions={transactions} />
+            <ActivityFeed transactions={Array.isArray(transactions) ? transactions : undefined} />
 
             {/* Trust Score */}
-            <TrustScore stats={stats} />
+            <TrustScore stats={typeof stats === 'object' && stats !== null && 'trustScore' in stats ? (stats as any) : undefined} />
           </div>
         </div>
 
@@ -275,7 +275,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-semibold mb-4">Discover New Groups</h3>
               
               <div className="space-y-3">
-                {publicGroups && publicGroups.length > 0 ? (
+                {Array.isArray(publicGroups) && publicGroups.length > 0 ? (
                   publicGroups.slice(0, 2).map((group: any) => (
                     <div key={group.id} className="border border-border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer">
                       <div className="flex justify-between items-start mb-2">
@@ -319,7 +319,7 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                {transactions && transactions.length > 0 ? (
+                {Array.isArray(transactions) && transactions.length > 0 ? (
                   transactions.slice(0, 3).map((transaction: any) => (
                     <div key={transaction.id} className="flex justify-between items-center py-2">
                       <div className="flex items-center space-x-3">

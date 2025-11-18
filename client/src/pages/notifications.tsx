@@ -80,8 +80,8 @@ export default function Notifications() {
     }
   };
 
-  const unreadNotifications = notifications?.filter((n: any) => !n.isRead) || [];
-  const readNotifications = notifications?.filter((n: any) => n.isRead) || [];
+  const unreadNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => !n.isRead) : [];
+  const readNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => n.isRead) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +124,7 @@ export default function Notifications() {
               </Card>
             ))}
           </div>
-        ) : notifications && notifications.length > 0 ? (
+        ) : Array.isArray(notifications) && notifications.length > 0 ? (
           <div className="space-y-6">
             {unreadNotifications.length > 0 && (
               <div>

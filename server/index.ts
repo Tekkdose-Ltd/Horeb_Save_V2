@@ -9,7 +9,7 @@ const app = express();
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
-    "http://localhost:5173",
+    "http://localhost:5000",
     "http://localhost:3000",
     "http://localhost:8080",
     process.env.FRONTEND_URL, // Your Netlify URL
@@ -94,14 +94,8 @@ app.use((req, res, next) => {
   // Default to 5000 for local development, 8080 for AWS deployment
   const defaultPort = process.env.NODE_ENV === "production" ? 8080 : 5000;
   const port = parseInt(process.env.PORT || defaultPort.toString(), 10);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    }
-  );
+  
+  server.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+  });
 })();

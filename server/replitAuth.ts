@@ -9,8 +9,9 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { sendWelcomeEmail } from "./services/emailService";
 
+// TEMPORARY: Allow local development without Replit auth
 if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+  console.warn("⚠️  REPLIT_DOMAINS not set - Replit auth disabled for local dev");
 }
 
 const getOidcConfig = memoize(
@@ -80,6 +81,15 @@ async function upsertUser(claims: any) {
 }
 
 export async function setupAuth(app: Express) {
+  // Skip auth setup if running in frontend-only mode (no database or Replit environment)
+  if (!process.env.DATABASE_URL || !process.env.REPLIT_DOMAINS) {
+    console.log("⏭️  Skipping auth setup - running in frontend-only mode");
+    // Add mock passport serialization to prevent errors
+    passport.serializeUser((user, done) => done(null, user));
+    passport.deserializeUser((user, done) => done(null, user as Express.User));
+    return;
+  }
+
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
@@ -144,31 +154,17 @@ export async function setupAuth(app: Express) {
   });
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
+export const isAuthenticated: RequestHandler = (req, res, next) => {
+  // In frontend-only mode, block authenticated routes
+  if (!process.env.DATABASE_URL || !process.env.REPLIT_DOMAINS) {
+    return res.status(503).json({ 
+      message: "Authentication unavailable - running in frontend-only mode" 
+    });
   }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+  
+  if (req.isAuthenticated()) {
     return next();
   }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  
+  res.status(401).json({ message: "Unauthorized" });
 };

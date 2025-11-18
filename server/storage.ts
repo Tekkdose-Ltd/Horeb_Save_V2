@@ -119,6 +119,10 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(
     userData: UpsertUser
   ): Promise<{ user: User; isNewUser: boolean }> {
+    if (!userData.id) {
+      throw new Error('User ID is required');
+    }
+    
     // First check if user exists
     const existingUser = await this.getUser(userData.id);
     const isNewUser = !existingUser;
@@ -221,7 +225,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...group,
-      members: members.map((row) => ({
+      members: members.map((row: any) => ({
         ...row.group_members,
         user: row.users,
       })),
@@ -305,7 +309,7 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(groupMembers.payoutOrder));
 
-    return result.map((row) => ({
+    return result.map((row: any) => ({
       ...row.group_members,
       user: row.users,
     }));

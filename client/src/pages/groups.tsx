@@ -48,10 +48,10 @@ export default function Groups() {
     },
   });
 
-  const filteredPublicGroups = publicGroups?.filter((group: any) =>
+  const filteredPublicGroups = Array.isArray(publicGroups) ? publicGroups.filter((group: any) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +101,7 @@ export default function Groups() {
                       </div>
                     ))}
                   </div>
-                ) : myGroups && myGroups.length > 0 ? (
+                ) : Array.isArray(myGroups) && myGroups.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {myGroups.map((group: any) => (
                       <GroupCard key={group.id} group={group} showActions />

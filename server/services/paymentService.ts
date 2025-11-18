@@ -7,7 +7,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-08-27.basil",
 }) : null;
 
 export class PaymentService {
@@ -37,7 +37,7 @@ export class PaymentService {
     }
 
     // Create or get Stripe customer
-    let customerId = user.stripeCustomerId;
+    let customerId: string | undefined = user.stripeCustomerId || undefined;
     if (!customerId && user.email) {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -45,6 +45,10 @@ export class PaymentService {
       });
       customerId = customer.id;
       await storage.updateUserStripeCustomerId(userId, customerId);
+    }
+
+    if (!customerId) {
+      throw new Error('Customer ID is required');
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -161,7 +165,7 @@ export class PaymentService {
   async processRefund(
     paymentIntentId: string,
     amount?: number,
-    reason = 'requested_by_customer'
+    reason: 'duplicate' | 'fraudulent' | 'requested_by_customer' = 'requested_by_customer'
   ): Promise<void> {
     if (!stripe) {
       throw new Error('Stripe not configured');
@@ -170,7 +174,7 @@ export class PaymentService {
     const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       amount: amount ? Math.round(amount * 100) : undefined,
-      reason,
+      reason: reason,
     });
 
     // Update contribution and create transaction record
