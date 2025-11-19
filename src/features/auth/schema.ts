@@ -7,7 +7,7 @@ export const CreateNewAccountValidationSchema = zod.object({
     last_name:zod.string().min(2).max(30).nonempty(),
     profile_image_url:zod.string(),
     phone_number:zod.string().regex(new RegExp(/^\+[1-9]\d{10,14}$/),'Invalid form number provided'),
-    date_of_birth:zod.date(),
+    date_of_birth:zod.string(),
     address_line_1:zod.string(),
     address_line_2:zod.string(),
     city:zod.string(),
