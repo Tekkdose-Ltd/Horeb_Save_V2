@@ -4,6 +4,9 @@ const NewAccountSchema = new mongoose.Schema({
    email:{
     type:mongoose.Schema.Types.String
    },
+   password:{
+     type:mongoose.Schema.Types.String 
+   },
     first_name:{
     type:mongoose.Schema.Types.String
    },

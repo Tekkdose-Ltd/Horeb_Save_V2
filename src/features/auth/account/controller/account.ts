@@ -70,7 +70,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
 
          const salt = await passwordHasher.genSalt(10)
 
-         const hashedPassword  = passwordHasher.hash(req.body.password,salt)
+         const hashedPassword  = await passwordHasher.hash(req.body.password,salt)
 
 
      const newAccount = new newAccountModel({
