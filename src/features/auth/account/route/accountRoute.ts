@@ -1,7 +1,8 @@
 import express from 'express'
-import { createNewAccount } from '../controller/account'
+import { createNewAccount, loginAccount, loginOut } from '../controller/account'
 import validateRequestBody from '../../../../middleware/validateRequestBody'
-import { CreateNewAccountValidationSchema } from '../../schema'
+import { CreateNewAccountValidationSchema, LoginAccountValidationSchema } from '../../schema'
+import userAuthenticationMiddleware from '../../../../middleware/userAuthenticationMiddleware'
 
 const accountRouter = express.Router()
 
@@ -24,6 +25,7 @@ type t={email:string,
     total_groups_completed:number,
     on_time_payment_rate:number
 }
+
 /**
  * @swagger
  * /api/v1/horebSave/auth/register:
@@ -140,6 +142,80 @@ type t={email:string,
 
 accountRouter.post('/register',validateRequestBody(CreateNewAccountValidationSchema),createNewAccount)
 
+
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/auth/login:
+ *     post:
+ *        summary: A user provide email  and password to login into account.
+ *        tags: [Account]
+ *        requestBody:
+ *                 description: User data
+ *                 required: true
+ *                 content:   
+ *                     application/json:
+ *                           schema:
+ *                             type: object
+ *                             properties:
+ *                                     email: 
+ *                                       type: string
+ *                                       format: email
+ *                                       description: email required field to login.
+ *                                     password: 
+ *                                       type: string
+ *                                       
+ *                                       description: password required field to login.
+ *                                
+ * 
+ * 
+ * 
+ * 
+ *                           required:
+ *                               -email
+ *                               -password
+ *        responses:
+ *                200:
+ *                 description: New account created successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+
+accountRouter.post('/login',validateRequestBody(LoginAccountValidationSchema),loginAccount)
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/auth/logout:
+ *     post:
+ *        summary: Log out account.
+ *        tags: [Account]
+ *
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+
+
+accountRouter.post('/logout',userAuthenticationMiddleware,loginOut)
 
 
 export default accountRouter

@@ -110,3 +110,93 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
 
 
 }
+
+
+export const loginAccount = async  (req:TypedRequest<{email:string,password:any}>,res:TypedResponse<ResponseBodyProps>) =>{
+
+  try {
+
+    const {email,password} = req.body
+
+
+
+
+      const user = await newAccountModel.findOne({email})
+
+   
+
+      if(user){
+        
+        const isPasswordValid = await  passwordHasher.compare(password,user.password!!)
+
+         if(isPasswordValid){
+
+            const token = jwt.sign({
+          first_name:user.first_name,
+          last_name:user.last_name,
+          email:user.email
+        },process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!,{expiresIn:1500})
+
+         await user.updateOne({last_seen:Date.now(),isLoggedIn:true})
+
+
+        res.status(SERVER_STATUS.SUCCESS).json({
+          title:'Login Account',
+          successful:false,
+          status:SERVER_STATUS.SUCCESS,
+          message:'Invalid credential provided.',
+          data:{
+            ...user.toObject(),
+            token
+          }
+        })
+
+          return
+         }
+
+
+           res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Login Account',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Invalid credential provided.',
+        
+        })
+
+      
+      }else{
+
+          res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Login Account',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Invalid credential provided.',
+        
+        })
+
+      }
+    
+  } catch (error:any) {
+
+    res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Login Account',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Something went wrong try again.',
+          error:error.message
+        
+        })
+    
+  }
+   
+}
+
+export const loginOut = async  (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+
+
+
+}
+
+
+
+

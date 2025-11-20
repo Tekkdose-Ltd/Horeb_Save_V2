@@ -23,6 +23,11 @@ export const CreateNewAccountValidationSchema = zod.object({
 
 })
 
+export const LoginAccountValidationSchema = zod.object({
+    email:zod.email().nonempty(),
+    password:zod.string().nonempty()
+})
+
 
  export type createCreateNewAccountInput = zod.infer<typeof CreateNewAccountValidationSchema>
 

@@ -5,7 +5,8 @@ import SERVER_STATUS from "../util/interface/CODE";
 import jwt  from 'jsonwebtoken'
 
 import TypedRequest from "../util/interface/TypedRequest";
-import NewAccountModel from "../features/auth/createAccount/model/accountModel";
+import { newAccountModel } from "../features/auth/account/model/createAccountModel";
+
 
 
 export interface  AuthMiddlewareProps{
@@ -47,9 +48,9 @@ export interface  AuthMiddlewareProps{
     }
 
      
-     const validToken = jwt.verify(token,process.env?.JWT_SECRET_KEY!!) as AuthMiddlewareProps
+     const validToken = jwt.verify(token!!,process.env?.JWT_SECRET_KEY!!) as AuthMiddlewareProps
   
-     const isUserValid = await NewAccountModel.findOne({_id:validToken._id})
+     const isUserValid = await newAccountModel.findOne({email:validToken.email})
 
    if(!isUserValid){
     res.status(SERVER_STATUS.Forbidden).json({

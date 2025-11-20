@@ -56,8 +56,22 @@ const NewAccountSchema = new mongoose.Schema({
     on_time_payment_rate:{
     type:mongoose.Schema.Types.Number,
     default:0
+   },
+
+    last_seen:{
+    type:mongoose.Schema.Types.Date,
+    default:Date.now()
+   },
+   isLoggedIn:{
+      type:mongoose.Schema.Types.Boolean,
+      default:false
    }
-})
+
+
+
+
+
+},{timestamps:true})
 
 
 export   const newAccountModel = mongoose.model('users',NewAccountSchema)
