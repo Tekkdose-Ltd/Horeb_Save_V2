@@ -6,7 +6,7 @@ import { AuthMiddlewareProps } from "../../middleware/userAuthenticationMiddlewa
 export default interface TypedRequest<T>  extends  Request   {
 
     body:T,
-    user?:AuthMiddlewareProps
+    user?:any
     userRole?:string,
    
     
