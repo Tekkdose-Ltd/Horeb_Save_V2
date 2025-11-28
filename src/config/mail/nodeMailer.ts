@@ -24,7 +24,7 @@ const nodeMail = nodemailer.createTransport({
 });
 
 
-
+//jjdjj
 const sendMail = async (data: MailProps) => {
   const emailTemplatePath = path.join(
     path.resolve(__dirname, "../../"),
