@@ -4,6 +4,10 @@ const NewAccountSchema = new mongoose.Schema({
    email:{
     type:mongoose.Schema.Types.String
    },
+   password:{
+     type:mongoose.Schema.Types.String,
+     
+   },
     first_name:{
     type:mongoose.Schema.Types.String
    },
@@ -35,21 +39,45 @@ const NewAccountSchema = new mongoose.Schema({
     type:mongoose.Schema.Types.String
    },
     profile_completed:{
-    type:mongoose.Schema.Types.Boolean
+    type:mongoose.Schema.Types.Boolean,
+    default:false
    },
     stripe_customer_id:{
-    type:mongoose.Schema.Types.String
+    type:mongoose.Schema.Types.String,
+    default:null
    },
     trust_score:{
-    type:mongoose.Schema.Types.Number
+    type:mongoose.Schema.Types.Number,
+    default:0
    },
     total_groups_completed:{
-    type:mongoose.Schema.Types.Number
+    type:mongoose.Schema.Types.Number,
+    default:0
    },
     on_time_payment_rate:{
-    type:mongoose.Schema.Types.Number
+    type:mongoose.Schema.Types.Number,
+    default:0
+   },
+
+    last_seen:{
+    type:mongoose.Schema.Types.Date,
+    default:Date.now()
+   },
+   isLoggedIn:{
+      type:mongoose.Schema.Types.Boolean,
+      default:false
+   },
+   lastLoggedInToken:{
+      type:mongoose.Schema.Types.String,
+      default:null,
+      select:false
    }
-})
+
+
+
+
+
+},{timestamps:true})
 
 
 export   const newAccountModel = mongoose.model('users',NewAccountSchema)

@@ -6,6 +6,7 @@ import swaggerUI from "swagger-ui-express";
 import swaggersetup from "./src/config/api-docummentation/swaggersetup";
 import cors from "cors";
 import dotenv from "dotenv";
+import { groupInvite } from './src/features/groups/route/groups';
 dotenv.config();
 
 
@@ -23,6 +24,10 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 //handle all routes of the app
 app.use('/api/v1/horebSave',mainAppRouter)
 
+
+
+
+
 //handle general error of the app
 app.use(errorHandler)
 
@@ -30,7 +35,9 @@ app.use(errorHandler)
 //connect to mongose db before starting sever
 connectDB().then((e)=>{
      app.listen(3050,()=>{
-    console.log('Listening to port 3050')
+           console.log('Listening to port 3050')
+ 
+ 
 })
   
 }).catch(()=>{
