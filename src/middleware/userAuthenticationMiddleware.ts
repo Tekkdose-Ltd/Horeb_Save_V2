@@ -58,7 +58,7 @@ export interface  AuthMiddlewareProps{
     }
 
      
-     const validToken = jwt.verify(token!!,process.env?.APP_SECRET_TOKEN_SIGNER_KEY!!) as AuthMiddlewareProps
+     const validToken = (jwt.verify(token!!,process.env?.APP_SECRET_TOKEN_SIGNER_KEY!!) as unknown) as AuthMiddlewareProps
   
      const isUserValid = await newAccountModel.findOne({email:validToken.email}).select('+lastLoggedInToken')
 
