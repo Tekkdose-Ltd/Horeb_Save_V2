@@ -116,16 +116,19 @@ export const loginAccount = async  (req:TypedRequest<{email:string,password:any}
 
   try {
 
+     
     const {email,password} = req.body
 
 
 
 
-      const user = await newAccountModel.findOne({email})
+     let user = await newAccountModel.findOne({email})
 
    
 
       if(user){
+      
+
         
         const isPasswordValid = await  passwordHasher.compare(password,user.password!!)
 
@@ -137,16 +140,17 @@ export const loginAccount = async  (req:TypedRequest<{email:string,password:any}
           email:user.email
         },process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!,{expiresIn:1500})
 
-         await user.updateOne({last_seen:Date.now(),isLoggedIn:true})
+   await user.updateOne({last_seen:Date.now(),isLoggedIn:true,lastLoggedInToken:token})
 
+   user =   await newAccountModel.findOne({email})
 
         res.status(SERVER_STATUS.SUCCESS).json({
           title:'Login Account',
-          successful:false,
+          successful:true,
           status:SERVER_STATUS.SUCCESS,
-          message:'Invalid credential provided.',
+          message:'Successfully logged in.',
           data:{
-            ...user.toObject(),
+            ...user?.toObject(),
             token
           }
         })
@@ -155,10 +159,11 @@ export const loginAccount = async  (req:TypedRequest<{email:string,password:any}
          }
 
 
-           res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+
+          res.status(SERVER_STATUS.BAD_REQUEST).json({
           title:'Login Account',
           successful:false,
-          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          status:SERVER_STATUS.BAD_REQUEST,
           message:'Invalid credential provided.',
         
         })
@@ -166,13 +171,15 @@ export const loginAccount = async  (req:TypedRequest<{email:string,password:any}
       
       }else{
 
-          res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          res.status(SERVER_STATUS.BAD_REQUEST).json({
           title:'Login Account',
           successful:false,
-          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          status:SERVER_STATUS.BAD_REQUEST,
           message:'Invalid credential provided.',
         
         })
+
+        
 
       }
     
@@ -191,12 +198,264 @@ export const loginAccount = async  (req:TypedRequest<{email:string,password:any}
    
 }
 
-export const loginOut = async  (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+export const logout = async  (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+
+   try {
+    
+      const user =  await newAccountModel.findOne({email:req.user?.email})
+
+      if(user &&  user.email && user.isLoggedIn){
+        await newAccountModel.updateOne({last_seen:Date.now(),isLoggedIn:false,lastLoggedInToken:''})
+        res.status(SERVER_STATUS.SUCCESS).json({
+          title:'Logout Account',
+          successful:true,
+          status:SERVER_STATUS.SUCCESS,
+          message:'Successfully logged out.',
+         
+        })
+        return
+      }
+
+      res.status(SERVER_STATUS.UNAUTHORIZED).json({
+          title:'Logout Account',
+          successful:false,
+          status:SERVER_STATUS.UNAUTHORIZED,
+          message:'Not authorized.',
+     
+        
+        })
+
+   } catch (error:any) {
+
+    res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Logout Account',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Something went wrong try again.',
+         error:error.message
+        
+        })
+    
+   }
+  
+
+}
+
+
+export const getUserProfile = async (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+
+  try {
+
+   const email = req.user?.email
+    
+   const user = await newAccountModel.findOne({email})
+
+
+     if(user && user.isLoggedIn){
+
+       res.status(SERVER_STATUS.SUCCESS).json({
+        title:'Get current user profile',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Successfully fetched.",
+        data:user
+       })
+
+       return
+     }
+
+    
+       res.status(SERVER_STATUS.UNAUTHORIZED).json({
+          title:'Get current user profile',
+          successful:false,
+          status:SERVER_STATUS.UNAUTHORIZED,
+          message:'Unauthorized',
+        
+        
+        })
+
+
+    
+  } catch (error:any) {
+    
+      res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Logout Account',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Something went wrong try again.',
+         error:error.message
+        
+        })
+  }
+
+}
+
+
+export const refreshToken = async (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+
+ 
+  try {
+
+  const body = req.body
+  const token = body.token
+  const user_id = body.user_id
+
+
+  //check if user is registered 
+  const user = await newAccountModel.findOne({_id:user_id}).select('+lastLoggedInToken')
+
+  if(user && user.isLoggedIn){
+
+    
+
+    
+    if(user.lastLoggedInToken!==token){
+        res.status(SERVER_STATUS.Forbidden).json({
+          title:'Refresh Token',
+          successful:false,
+          status:SERVER_STATUS.Forbidden,
+          message:'Invalid token provided.',
+        
+        })
+        return
+    }
+
+
+     jwt.verify(token,process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!,async (err:any)=>{
+       if(err){
+
+         if(err.name === 'TokenExpiredError'){
+
+            const token = jwt.sign({
+          first_name:user.first_name,
+          last_name:user.last_name,
+          email:user.email
+        },process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!,{expiresIn:1500})
+        
+        await user.updateOne({lastLoggedInToken:token})
+
+          res.status(SERVER_STATUS.SUCCESS).json({
+          title:'Refresh Token',
+          successful:true,
+          status:SERVER_STATUS.SUCCESS,
+          message:'Token refreshed.',
+          data:{
+            new_token:token
+          }
+        
+        })
+
+
+           
+          return
+         }
+
+
+
+          res.status(SERVER_STATUS.Forbidden).json({
+          title:'Refresh Token',
+          successful:false,
+          status:SERVER_STATUS.Forbidden,
+          message:'Invalid token provided.',
+        
+        })
+
+   
+      return 
+       }
+       
+
+
+        res.status(SERVER_STATUS.BAD_REQUEST).json({
+          title:'Refresh Token',
+          successful:false,
+          status:SERVER_STATUS.BAD_REQUEST,
+          message:'Token not expired.',
+        
+        })
+
+     
+
+     })
+
+return
+  }
+
+   res.status(SERVER_STATUS.Forbidden).json({
+          title:'Reresh Token',
+          successful:false,
+          status:SERVER_STATUS.Forbidden,
+          message:'Invalid details.',
+        
+        })
+
+
+
+    
+  } catch (error) {
+
+
+        res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Refresh Token',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Invalid credential provided.',
+        
+        })
+    
+  }
 
 
 
 }
 
+ 
+export const updateUserDetails = async (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>) =>{
+
+    try {
+   
+      let user =  await newAccountModel.findOne({email:req.user?.email})
+
+
+
+      if(user && user.isLoggedIn){
+
+           await user.updateOne(req.body)
+
+         user = await newAccountModel.findOne({email:user.email})
+
+          res.status(SERVER_STATUS.SUCCESS).json({
+          title:'Update user details',
+          successful:true,
+          status:SERVER_STATUS.SUCCESS,
+          message:'Successfull.',
+        
+        })
+
+
+      }else{
+
+          res.status(SERVER_STATUS.UNAUTHORIZED).json({
+          title:'Update user details',
+          successful:false,
+          status:SERVER_STATUS.UNAUTHORIZED,
+          message:'Unauthorized access.',
+        
+        })
+      }
+      
+    } catch (error) {
+
+        res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Update user details',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Invalid details.',
+        
+        })
+      
+    }
+}
 
 
 

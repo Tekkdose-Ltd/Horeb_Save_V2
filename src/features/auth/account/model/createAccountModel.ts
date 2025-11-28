@@ -5,7 +5,8 @@ const NewAccountSchema = new mongoose.Schema({
     type:mongoose.Schema.Types.String
    },
    password:{
-     type:mongoose.Schema.Types.String 
+     type:mongoose.Schema.Types.String,
+     
    },
     first_name:{
     type:mongoose.Schema.Types.String
@@ -65,6 +66,11 @@ const NewAccountSchema = new mongoose.Schema({
    isLoggedIn:{
       type:mongoose.Schema.Types.Boolean,
       default:false
+   },
+   lastLoggedInToken:{
+      type:mongoose.Schema.Types.String,
+      default:null,
+      select:false
    }
 
 

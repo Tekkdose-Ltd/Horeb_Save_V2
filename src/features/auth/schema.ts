@@ -1,4 +1,4 @@
-import zod from 'zod'
+import zod, { z } from 'zod'
 
 export const CreateNewAccountValidationSchema = zod.object({
     email:zod.email().nonempty(),
@@ -28,6 +28,27 @@ export const LoginAccountValidationSchema = zod.object({
     password:zod.string().nonempty()
 })
 
+export const refreshTokenValidationSchema = zod.object({
+    token:zod.string().nonempty().min(10),
+    user_id:zod.string().min(24)
+})
+
+
+export const updateUserDetailsValidationSchema =  zod.object({
+    first_name:zod.string().min(2).max(30).nonempty(),
+    last_name:zod.string().min(2).max(30).nonempty(),
+    profile_image_url:zod.string().optional(),
+    phone_number:zod.string().regex(new RegExp(/^\+[1-9]\d{10,14}$/),'Invalid form number provided').optional(),
+    date_of_birth:zod.string().optional(),
+    address_line_1:zod.string().optional(),
+    address_line_2:zod.string().optional(),
+    city:zod.string().optional(),
+    postalCode:zod.string().optional(),
+   
+    
+
+
+})
 
  export type createCreateNewAccountInput = zod.infer<typeof CreateNewAccountValidationSchema>
 

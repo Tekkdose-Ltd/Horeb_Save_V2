@@ -1,28 +1,35 @@
-import express from "express";
-import TypedResponse from "../util/interface/TypedResponse";
-import { ResponseBodyProps } from "../util/interface/ResponseBodyProps";
-import SERVER_STATUS from "../util/interface/CODE";
-import jwt  from 'jsonwebtoken'
+import {NextFunction} from "express";
 
-import TypedRequest from "../util/interface/TypedRequest";
+import jwt  from 'jsonwebtoken'
 import { newAccountModel } from "../features/auth/account/model/createAccountModel";
+import SERVER_STATUS from "../util/interface/CODE";
+import { ResponseBodyProps } from "../util/interface/ResponseBodyProps";
+import TypedRequest from "../util/interface/TypedRequest";
+import TypedResponse from "../util/interface/TypedResponse";
+
+
 
 
 
 export interface  AuthMiddlewareProps{
-    _id:string,
+    _id:any,
     email:string,
     password: string,
     role:string
 }
 
 
- export default async  (req:TypedRequest<{}>,res:TypedResponse<ResponseBodyProps>,next:express.NextFunction) =>{
- 
-    try{
-    const authHeader = req.headers.authorization 
+ export default async  (req:TypedRequest<any>,res:TypedResponse<ResponseBodyProps>,next:NextFunction) =>{
+   console.log('fired now...')
 
-    if(!authHeader){
+   try{
+        
+    const authHeader = req?.headers?.authorization 
+    
+
+  
+
+       if(!authHeader){
 
         res.status(SERVER_STATUS.UNAUTHORIZED).json({
             title:"Aunthentication Message",
@@ -31,9 +38,12 @@ export interface  AuthMiddlewareProps{
             message:"Authorization header is needed to continue."
             
         })
-
+ 
+       
         return
     }
+
+
   
     const token  =  authHeader?.split(' ')[1]
 
@@ -48,11 +58,14 @@ export interface  AuthMiddlewareProps{
     }
 
      
-     const validToken = jwt.verify(token!!,process.env?.JWT_SECRET_KEY!!) as AuthMiddlewareProps
+     const validToken = jwt.verify(token!!,process.env?.APP_SECRET_TOKEN_SIGNER_KEY!!) as AuthMiddlewareProps
   
-     const isUserValid = await newAccountModel.findOne({email:validToken.email})
+     const isUserValid = await newAccountModel.findOne({email:validToken.email}).select('+lastLoggedInToken')
 
-   if(!isUserValid){
+   
+
+   if(!isUserValid || isUserValid.lastLoggedInToken !== token ){
+
     res.status(SERVER_STATUS.Forbidden).json({
         title:"Aunthentication Message",
         status:SERVER_STATUS.Forbidden,
@@ -63,9 +76,14 @@ export interface  AuthMiddlewareProps{
     return
    }
  
-    req.user = validToken
+    req.user = {...validToken,_id:isUserValid._id!!}
     next()
+
+
+
+
 }catch(error:any){
+
     res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
         title:"Aunthentication Message",
         status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
@@ -73,5 +91,7 @@ export interface  AuthMiddlewareProps{
         message:"An error occured.",
          error:error.message
     })
+   
 }
+
  }
