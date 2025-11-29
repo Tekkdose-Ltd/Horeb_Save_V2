@@ -17,10 +17,11 @@ interface NewGroup {
      
       contribution_amount:number
      
-       total_round:number
+       
      
        is_public:boolean
-         
+       
+       max_number_of_members:number
 
 
 }
@@ -34,6 +35,8 @@ const getRandomCode = async ()=>{
     }
   return code
 }
+
+
 
 export const createNewGroup =  async (req:TypedRequest<NewGroup>,res:TypedResponse<ResponseBodyProps>) => {
 
@@ -65,7 +68,8 @@ export const createNewGroup =  async (req:TypedRequest<NewGroup>,res:TypedRespon
         const newGroup = new  newGroupModel({name:req.body.name,
           is_public:req.body.is_public,
           creator_id:user?._id,
-          total_round:req.body.total_round,
+          total_round:req.body.max_number_of_members,
+          max_number_of_members:req.body.max_number_of_members,
           description:req.body.description,
           frequency:req.body.frequency,
           contribution_amount:req.body.contribution_amount})
@@ -111,7 +115,7 @@ export const createNewGroup =  async (req:TypedRequest<NewGroup>,res:TypedRespon
 
 
 
-export const joinGroupByLink = async (req:TypedRequest<{}>,res:TypedResponse<ResponseBodyProps>) => {
+export const joinGroupByInviteCode = async (req:TypedRequest<{invite_code:string}>,res:TypedResponse<ResponseBodyProps>) => {
 
 
     try{
@@ -120,14 +124,27 @@ export const joinGroupByLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
          * check if group already created with same name
          */
         const user = req.user
-        const group_id = req.query.id?.toString()
+        const group_invitation_code = req.body.invite_code
       
-        if(group_id){
+     
 
-          let group = await newGroupModel.findOne({groupInviteLink:process.env.GROUP_LINK_URL?.concat('?id=').concat(group_id)})
+          let group = await newGroupModel.findOne({invite_code:group_invitation_code})
 
           if(group){
             let members = group.members
+
+
+            if(members.length === group.max_number_of_members){
+              res.status(SERVER_STATUS.BAD_REQUEST).json({
+        title:'Join Group By Invitation Message',
+        status:SERVER_STATUS.BAD_REQUEST,
+        successful:false,
+        message:"Group full already.",
+        
+      })
+      return 
+
+            }
 
             //check if you are already  member
              if(members.filter(member=>member.id === user)){
@@ -140,7 +157,7 @@ export const joinGroupByLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
       })
          return
 
-             }
+        }
 
 
           members.push({
@@ -149,7 +166,7 @@ export const joinGroupByLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
           })
             group = await newGroupModel.findOneAndUpdate({_id:group._id},{members})
 
-                res.status(SERVER_STATUS.SUCCESS).json({
+         res.status(SERVER_STATUS.SUCCESS).json({
         title:'Join Group By Invitation Message',
         status:SERVER_STATUS.SUCCESS,
         successful:true,
@@ -157,9 +174,10 @@ export const joinGroupByLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
         
       })
 
-          }
+      return
+      }
 
-        }
+        
 
 
         
@@ -223,7 +241,46 @@ export const getMyGroups = async (req:TypedRequest<{}>,res:TypedResponse<Respons
 
     const user = req.user
 
-    //const
+    try {
+     
+      const groups = await newGroupModel.find({'members.id':user._id})
+
+      if(groups){
+
+         res.status(SERVER_STATUS.SUCCESS).json({
+        title:'My Groups Message',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Groups fetched successfully",
+        data:groups
+     
+      })
+
+   return
+      }
+
+
+       res.status(SERVER_STATUS.SUCCESS).json({
+        title:'My Groups Message',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"No group joined or created",
+     
+      })
+
+
+    } catch (error:any) {
+
+        res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+        title:'My Groups Message',
+        status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+        successful:false,
+        message:"An error occured",
+        error:error.message
+     
+      })
+      
+    }
 
 
 
@@ -235,7 +292,7 @@ export const getPublicGroups =  async (req:TypedRequest<{}>,res:TypedResponse<Re
     try{
 
 
-    const publicGroups = await newGroupModel.find({publicity:'public'})
+    const publicGroups = await newGroupModel.find({is_public:true})
 
           res.status(SERVER_STATUS.SUCCESS).json({
                 title:'Public Groups Message',

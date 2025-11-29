@@ -21,7 +21,7 @@ const groupSchema = new mongoose.Schema({
         ref:'users'
     },
 
-       frequency:{
+      frequency:{
       type:mongoose.SchemaTypes.String,
       enum:['weekly','monthly','bi-weekly']
     },
@@ -40,6 +40,8 @@ const groupSchema = new mongoose.Schema({
         type:mongoose.SchemaTypes.Number,
         default:0
      },
+
+    
 
      next_payout_date:{
      type:mongoose.SchemaTypes.String,
@@ -87,6 +89,7 @@ const groupSchema = new mongoose.Schema({
          type:mongoose.Schema.Types.Number,
          default:0
        },
+
        has_received_payout:{
          type:mongoose.Schema.Types.Boolean,
         default:false
@@ -114,6 +117,16 @@ const groupSchema = new mongoose.Schema({
         type:String,
         enum:['draft', 'active', 'completed', 'cancelled'],
         default:'active'
+    },
+
+    max_number_of_members:{
+       type:mongoose.SchemaTypes.Number,
+     default:0
+    },
+
+    circles_completed:{
+    type:mongoose.SchemaTypes.Number,
+     default:0
     }
 
 },{timestamps:true})

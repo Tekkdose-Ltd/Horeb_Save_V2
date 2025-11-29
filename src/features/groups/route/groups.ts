@@ -1,8 +1,8 @@
   import express from 'express'
 import userAuthenticationMiddleware from '../../../middleware/userAuthenticationMiddleware'
 import validateRequestBody from '../../../middleware/validateRequestBody'
-import { createNewGroupValidationSchema } from '../shema'
-import { createNewGroup, getPublicGroups, joinGroupByLink } from '../controller/groups'
+import { createNewGroupValidationSchema, joinGroupValidationSchema } from '../shema'
+import { createNewGroup, getMyGroups, getPublicGroups, joinGroupByInviteCode } from '../controller/groups'
 
 
 const groupsRouter =  express.Router()
@@ -38,10 +38,10 @@ const groupsRouter =  express.Router()
  *                                       type: string
  *                                       
  *                                       description: A description about group.
- *                                     total_round: 
+ *                                     max_number_of_members: 
  *                                       type: number
  *                                       
- *                                       description: Total rounds to go.
+ *                                       description: Total number in a group.
  *                                     frequency: 
  *                                       type: string
  *                                       
@@ -121,6 +121,94 @@ groupsRouter.post('/',userAuthenticationMiddleware,validateRequestBody(createNew
 groupsRouter.get('/public',userAuthenticationMiddleware,getPublicGroups)
 
 
+
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/groups/join:
+ *     post:
+ *        summary: A user provide invition code to join group.
+ *        tags: [Groups]
+ *        requestBody:
+ *                 description: User data
+ *                 required: true
+ *                 content:   
+ *                     application/json:
+ *                           schema:
+ *                             type: object
+ *                             properties:
+ *                                    invite_code: 
+ *                                       type: string
+ *                                       
+ *                                       description: code to join group.
+ *                                  
+ * 
+ * 
+ *                                    
+ * 
+ * 
+ * 
+ * 
+ * 
+ *                           required:
+ *                               -email
+ *                               -password
+ *        responses:
+ *                200:
+ *                 description: New account created successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+groupsRouter.post('/join',validateRequestBody(joinGroupValidationSchema),userAuthenticationMiddleware,joinGroupByInviteCode)
+
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/groups/my:
+ *     get:
+ *        summary: Get user groups.
+ *        tags: [Groups]
+ *        
+ *        responses:
+ *                200:
+ *                 description: Groups fetched successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ * 
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+groupsRouter.get('/my',userAuthenticationMiddleware,getMyGroups)
 
 
 
