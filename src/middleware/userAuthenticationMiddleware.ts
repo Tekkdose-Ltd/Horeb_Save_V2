@@ -76,7 +76,7 @@ export interface  AuthMiddlewareProps{
     return
    }
  
-    req.user = {...validToken,_id:isUserValid._id!!}
+    req.user = {...validToken,_id:isUserValid._id!!,role:isUserValid.role}
     next()
 
 
