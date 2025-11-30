@@ -8,6 +8,11 @@ const NewAccountSchema = new mongoose.Schema({
      type:mongoose.Schema.Types.String,
      
    },
+   role:{
+      type:String,
+      enum:['user','admin'],
+      default:'user'
+   },
     first_name:{
     type:mongoose.Schema.Types.String
    },
