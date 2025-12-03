@@ -1,0 +1,40 @@
+import zod from "zod";
+
+
+
+export const createNewGroupValidationSchema =  zod.object({
+   
+
+    name:zod.string().nonempty(),
+   
+    
+
+     
+     description: zod.string().nonempty(),
+     
+     
+      frequency:zod.enum(['weekly', 'monthly','bi-weekly']),
+     
+      contribution_amount:zod.number().gte(100),
+     
+   
+      max_number_of_members:zod.number().gte(3).nonoptional(),
+       
+      is_public:zod.boolean()
+   
+
+
+})
+
+
+export const joinGroupValidationSchema =  zod.object({
+   
+
+   invite_code:zod.string().min(10).nonempty(),
+   
+   
+
+   
+
+})
+
