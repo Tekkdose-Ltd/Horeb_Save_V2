@@ -6,10 +6,12 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 import { CreateGroupModal } from "@/components/CreateGroupModal";
 import { GroupCard } from "@/components/GroupCard";
 import { TrustScore } from "@/components/TrustScore";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { PayoutRotation } from "@/components/PayoutRotation";
 import { Users, PoundSterling, Clock, Star, Plus, Bell } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -93,32 +95,35 @@ export default function Dashboard() {
   const unreadNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => !n.isRead).length : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar className="w-64" />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dashboard Hero */}
-        <div className="mb-8">
-          <div className="gradient-bg rounded-xl p-6 text-white mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <div>
-                <h2 className="text-2xl font-bold mb-2" data-testid="text-welcome">
-                  Welcome back, {userName}!
-                </h2>
-                <p className="text-white/90">
-                  You have {typeof stats === 'object' && stats !== null && 'activeGroups' in stats ? (stats as any).activeGroups : 0} active groups and £{typeof stats === 'object' && stats !== null && 'totalSaved' in stats ? (stats as any).totalSaved : 0} in contributions this month.
-                </p>
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Dashboard Hero */}
+          <div className="mb-8">
+            <div className="bg-primary rounded-xl p-8 text-white mb-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2" data-testid="text-welcome">
+                    Welcome back, {userName}!
+                  </h2>
+                  <p className="text-white/90 text-lg">
+                    You have {typeof stats === 'object' && stats !== null && 'activeGroups' in stats ? (stats as any).activeGroups : 0} active groups and £{typeof stats === 'object' && stats !== null && 'totalSaved' in stats ? (stats as any).totalSaved : 0} in contributions this month.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4 md:mt-0 bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors"
+                  data-testid="button-create-group"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Group
+                </Button>
               </div>
-              <Button 
-                onClick={() => setShowCreateModal(true)}
-                className="mt-4 md:mt-0 bg-white text-primary px-6 py-2 rounded-lg font-semibold hover:bg-white/90 transition-colors"
-                data-testid="button-create-group"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Group
-              </Button>
             </div>
-          </div>
           
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -228,6 +233,11 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payout Rotation Section - Below Active Groups */}
+            <div className="mt-6">
+              <PayoutRotation />
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -362,6 +372,7 @@ export default function Dashboard() {
         isOpen={showCreateModal} 
         onClose={() => setShowCreateModal(false)} 
       />
+      </div>
     </div>
   );
 }
