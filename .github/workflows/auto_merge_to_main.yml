@@ -1,23 +1,26 @@
 name: Auto Merge to main
 
 on:
-   pull_request:
-    types: [labeled]
-
-    jobs:
+   push:
+        branches:
+        - backend
+        types:
+        - labeled
+   jobs:
         automerge:
             runs-on: ubuntu-latest
             steps:
-             -   name: Checkout code
-              uses: actions/checkout@v3
-               with:
-                token: ${{ secrets.GITHUB_TOKEN }}
 
-            -  name: Auto Merge to main
-                uses: actions/github-script@v6
-                with:
-                   github-token: github-token: ${{ secrets.GITHUB_TOKEN }}
-                    script: |
+             -   name: Checkout code
+                 uses: actions/checkout@v3
+                 with :
+                    token: ${{ secrets.GITHUB_TOKEN }}
+
+             -   name: Auto Merge to main
+                 uses: actions/github-script@v6
+                 with:github-token:
+                              github-token: ${{ secrets.GITHUB_TOKEN }}
+                script: |
                       github.pulls.merge({
                         owner: context.repo.owner,
                         repo: context.repo.repo,
