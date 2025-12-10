@@ -1,8 +1,9 @@
   import express from 'express'
 import userAuthenticationMiddleware from '../../../middleware/userAuthenticationMiddleware'
 import validateRequestBody from '../../../middleware/validateRequestBody'
-import { createNewGroupValidationSchema, joinGroupValidationSchema } from '../shema'
+import { createNewGroupValidationSchema, joinGroupValidationSchema, newGroupTrustRatingValidationSchema } from '../shema'
 import { createNewGroup, getMyGroups, getPublicGroups, joinGroupByInviteCode } from '../controller/groups'
+import { newGroupTrustRating } from '../controller/trustRatings'
 
 
 const groupsRouter =  express.Router()
@@ -209,6 +210,77 @@ groupsRouter.post('/join',validateRequestBody(joinGroupValidationSchema),userAut
  */
 
 groupsRouter.get('/my',userAuthenticationMiddleware,getMyGroups)
+
+
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/groups/rating:
+ *     post:
+ *        summary: Group member create a trust rating score for  other members.
+ *        tags: [Rating]
+ *        requestBody:
+ *                 description: User data
+ *                 required: true
+ *                 content:   
+ *                     application/json:
+ *                           schema:
+ *                             type: object
+ *                             properties:
+ *                                   group_id: 
+ *                                       type: string
+ *                                       
+ *                                       description: group id.
+ * 
+ *                                   group_member_id:
+ *                                       type: string
+ *                                       description: group member id to be rated.
+ * 
+ *                                  
+ *                                   rating_score:
+ *                                      type: number
+ *                                      description: trust rating score.
+ *                                   description:
+ *                                     type: string
+ *                                     description: optional description about the rating.
+ * 
+ * 
+ *                                  
+ * 
+ * 
+ *                                  
+ * 
+ * 
+ *                                    
+ * 
+ * 
+ * 
+ * 
+ * 
+ *                           required:
+ *                               -email
+ *                               -password
+ *        responses:
+ *                200:
+ *                 description: New account created successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+groupsRouter.post('/rating',userAuthenticationMiddleware,validateRequestBody(newGroupTrustRatingValidationSchema),newGroupTrustRating)
 
 
 
