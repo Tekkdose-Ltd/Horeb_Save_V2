@@ -12,11 +12,10 @@ dotenv.config();
 
 const app = express()
 
-app.use(cors({
-    allowedHeaders:['Content-Type','Authorization'],
-    methods:['GET','POST','PUT','DELETE','OPTIONS'],
-    origin:['http://localhost:5174','http://localhost:3050','http://localhost:5173','https://horebsavebackend.onrender.com/']
-}))
+app.use(cors({origin:'*',allowedHeaders:['Content-Type','Authorization'],
+  methods:['GET','POST','PUT','DELETE','OPTIONS']}));
+
+
 
 // api docummentation setup
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggersetup));
