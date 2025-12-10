@@ -38,3 +38,16 @@ export const joinGroupValidationSchema =  zod.object({
 
 })
 
+
+export const newGroupTrustRatingValidationSchema = zod.object({
+
+   group_id:zod.string().nonempty(),
+   
+   group_member_id:zod.string().nonempty(),
+
+   rating_score:zod.number().min(1).max(5),
+
+   description:zod.string().optional()
+
+})
+

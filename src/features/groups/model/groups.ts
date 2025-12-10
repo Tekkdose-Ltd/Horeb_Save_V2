@@ -49,7 +49,7 @@ const groupSchema = new mongoose.Schema({
      },
 
      start_date:{
-     type:mongoose.SchemaTypes.String,
+     type:mongoose.SchemaTypes.Date,
      default:null
      },
 
