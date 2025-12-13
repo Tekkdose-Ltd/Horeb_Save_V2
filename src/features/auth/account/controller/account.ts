@@ -1,3 +1,5 @@
+import { v4 } from "uuid";
+import sendMail from "../../../../config/mail/nodeMailer";
 import SERVER_STATUS from "../../../../util/interface/CODE";
 import { ResponseBodyProps } from "../../../../util/interface/ResponseBodyProps";
 import TypedRequest from "../../../../util/interface/TypedRequest";
@@ -5,6 +7,7 @@ import TypedResponse from "../../../../util/interface/TypedResponse";
 import { newAccountModel } from "../model/createAccountModel";
 import passwordHasher from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { ValidateUserAndRefererEmail } from "../model/validateUserAndRefererEmail";
 
 type NewAccount = {
  email:string,
@@ -17,6 +20,7 @@ type NewAccount = {
     address_line_1:string,
     address_line_2:string,
     city:string,
+    surety_email:string,
     postalCode:string,
     country:string,
     profile_completed:boolean,
@@ -25,6 +29,12 @@ type NewAccount = {
     total_groups_completed:number,
     on_time_payment_rate:number
 }
+
+
+
+
+
+
 
 export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedResponse<ResponseBodyProps>) => {
 
@@ -49,7 +59,31 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
             return
     
         }
+
+        const isEmailSentLinkAlreadyGenerated = await ValidateUserAndRefererEmail.findOne({email_to_validate:req.body.email,who_to_validate:'user_email'})
+
+        if(isEmailSentLinkAlreadyGenerated){
+
+            res.status(SERVER_STATUS.BAD_REQUEST).json({
+                title:'New Account Message',
+                status:SERVER_STATUS.BAD_REQUEST,
+                successful:false,
+                message:'A verification link has already been sent to this email address. Please check your inbox.'
+            })
     
+            return
+          }
+         if(req.body.surety_email === req.body.email){
+  res.status(SERVER_STATUS.BAD_REQUEST).json({
+                title:'New Account Message',
+                status:SERVER_STATUS.BAD_REQUEST,
+                successful:false,
+                message:'You  cannot serve as a surety for yourself.'
+            })
+    
+            return
+         }
+          
         /**
          * check if password follows the right standard alphanumeric characters
          */
@@ -68,32 +102,59 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
             return
           }
 
-         const salt = await passwordHasher.genSalt(10)
+   //send email with magic link to verify email
 
-         const hashedPassword  = await passwordHasher.hash(req.body.password,salt)
+   const verify_email_link = await generateMagicLinkCode()
+
+ await sendMail({
+            receiver:req.body.email,
+            subject:'Complete your Horeb Save account registration',
+            template:'registeration_email.ejs',
+            emailData:{
+              fullName:`${req.body.first_name} ${req.body.last_name}`,
+             
+              verify_email_link:verify_email_link
+            }
+ })
 
 
-     const newAccount = new newAccountModel({
-        ...req.body,
-        password:hashedPassword
-     })
+ await sendMail({
+            receiver:req.body.surety_email,
+            subject:'Horeb Save Guarantor Verification',
+            template:'guarantor_verification_email.ejs',
+            emailData:{
+              fullName:`${req.body.surety_email}`,
+              guarantee:`${req.body.first_name} ${req.body.last_name}`,
+             
+              verify_email_link:verify_email_link
+            }
+ })
 
-      await newAccount.save()
+  await new ValidateUserAndRefererEmail({
+        who_to_validate:'user_email',
+        email_to_validate:req.body.email,
+        magic_link:verify_email_link,
+        temp_data:req.body
+      
+  }).save()
 
-      const token = jwt.sign({email:req.body.email,first_name:req.body.first_name,last_name:req.body.last_name},process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!)
+  await new ValidateUserAndRefererEmail({
+        who_to_validate:'referer_email',
+        email_to_validate:req.body.email,
+        magic_link:verify_email_link,
+        temp_data:req.body
+      
+  }).save()
 
-      res.status(SERVER_STATUS.CREATED).json({
+  res.status(SERVER_STATUS.SUCCESS).json({
         title:'Create New Account Message',
-        status:SERVER_STATUS.CREATED,
+        status:SERVER_STATUS.SUCCESS,
         successful:true,
-        message:"New Account Created Successfully !!!!",
-        data:{
-         
-        token,
-
-        }
+        message:"Email sent to verify your email address and email sent to your surety !!!!",
+       data:{isEmailSent:true}
       })
-     
+
+      
     
     }catch(e:any){
 
@@ -111,6 +172,118 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
 
 }
 
+
+export const verifyEmailLink = async (req:TypedRequest<{}>,res:TypedResponse<ResponseBodyProps>) =>{
+
+  try {
+
+    const magicLinkCode = req.query.code as string
+
+    
+
+    const validateMagicLink = await ValidateUserAndRefererEmail.findOne({magic_link:process?.env?. base_url?.concat('api/v1/horebSave/auth/verify-email?code=').concat(magicLinkCode)})
+
+
+    if(validateMagicLink && validateMagicLink.who_to_validate === 'user_email' && validateMagicLink.surety_consent){
+
+
+
+         const salt = await passwordHasher.genSalt(10)
+
+         const hashedPassword  = await passwordHasher.hash(validateMagicLink.temp_data.password,salt)
+
+
+     const newAccount = new newAccountModel({
+        ...validateMagicLink.temp_data,
+        password:hashedPassword
+     })
+
+      await newAccount.save()
+
+      //res.redirect(process?.env?.FRONTEND_BASE_URL!!.concat('/login?verified=true'))
+
+      const token = jwt.sign({email:validateMagicLink.temp_data.email,first_name:validateMagicLink.temp_data.first_name,last_name:validateMagicLink.temp_data.last_name},process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!)
+
+      res.status(SERVER_STATUS.CREATED).json({
+        title:'Create New Account Message',
+        status:SERVER_STATUS.CREATED,
+        successful:true,
+        message:"New Account Created Successfully !!!!",
+        data:{
+         
+        token,
+
+        }
+      })
+     
+     
+
+        return
+    }else if(validateMagicLink && validateMagicLink.who_to_validate === 'user_email' && !validateMagicLink.surety_consent){
+          await validateMagicLink.updateOne({user_validated_email:true})
+        res.status(SERVER_STATUS.SUCCESS).json({
+        title:'Create New Account Message',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Email validated",
+        
+      })
+    }else if(validateMagicLink && validateMagicLink.who_to_validate === 'referer_email' && validateMagicLink.user_validated_email){
+
+         const salt = await passwordHasher.genSalt(10)
+
+         const hashedPassword  = await passwordHasher.hash(validateMagicLink.temp_data.password,salt)
+
+
+     const newAccount = new newAccountModel({
+        ...validateMagicLink.temp_data,
+        password:hashedPassword
+     })
+
+      await newAccount.save()
+
+      //res.redirect(process?.env?.FRONTEND_BASE_URL!!.concat('/login?verified=true'))
+
+     
+      res.status(SERVER_STATUS.SUCCESS).json({
+        title:'Guarantor Verification',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Process completed",
+        
+      })
+     
+    }else if (validateMagicLink && validateMagicLink.who_to_validate === 'referer_email' && !validateMagicLink.user_validated_email){
+       await validateMagicLink.updateOne({surety_consent:true})
+
+          res.status(SERVER_STATUS.SUCCESS).json({
+        title:'Guarantor Verification',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Process completed",
+        
+      })
+    }else
+
+     res.status(SERVER_STATUS.BAD_REQUEST).json({
+          title:'Verify Email Link',
+          successful:false,
+          status:SERVER_STATUS.BAD_REQUEST,
+          message:'Invalid or expired link.',
+        
+        })
+    
+  } catch (error:any) {
+        res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+          title:'Verify Email Link',
+          successful:false,
+          status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+          message:'Something went wrong try again.',
+         error
+    
+  })
+}
+}
 
 export const loginAccount = async  (req:TypedRequest<{email:string,password:any}>,res:TypedResponse<ResponseBodyProps>) =>{
 
@@ -459,3 +632,13 @@ export const updateUserDetails = async (req:TypedRequest<any>,res:TypedResponse<
 
 
 
+const generateMagicLinkCode = async () =>{
+   
+   const isMagicLinkGeneratedBefore =  await ValidateUserAndRefererEmail.findOne({magic_link:process?.env?. base_url?.concat('verify-email?code=').concat(v4())})
+
+   while(isMagicLinkGeneratedBefore){
+      return generateMagicLinkCode()
+   }
+   
+   return process?.env?. base_url?.concat('api/v1/horebSave/auth/verify-email?code=').concat(v4())
+}

@@ -16,10 +16,10 @@ console.log(process.env.notification_email);
 const nodeMail = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    // user: "benagu477@gmail.com",
-    //pass: "rgve xodw pfcf csgj"
-    user: process.env.notification_email,
-    pass: process.env.google_app_password
+     user: "benagu477@gmail.com",
+    pass: "rgve xodw pfcf csgj"
+   // user: process.env.notification_email,
+   // pass: process.env.google_app_password
   }
 });
 

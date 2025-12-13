@@ -1,5 +1,5 @@
 import express from 'express'
-import { createNewAccount, getUserProfile, loginAccount, logout, refreshToken, updateUserDetails } from '../controller/account'
+import { createNewAccount, getUserProfile, loginAccount, logout, refreshToken, updateUserDetails, verifyEmailLink } from '../controller/account'
 import validateRequestBody from '../../../../middleware/validateRequestBody'
 import { CreateNewAccountValidationSchema, LoginAccountValidationSchema, refreshTokenValidationSchema, updateUserDetailsValidationSchema } from '../../schema'
 import userAuthenticationMiddleware from '../../../../middleware/userAuthenticationMiddleware'
@@ -17,6 +17,7 @@ type t={email:string,
     address_line_1:string,
     address_line_2:string,
     city:string,
+    surety_email:string,
     postalCode:string,
     country:string,
     profile_completed:boolean,
@@ -44,6 +45,10 @@ type t={email:string,
  *                                       type: string
  *                                       format: email
  *                                       description: email required to setup account.
+ *                                     surety_email: 
+ *                                       type: string
+ *                                       format: email
+ *                                       description: emailof the guarantor.
  *                                     password: 
  *                                       type: string
  *                                       
@@ -429,5 +434,6 @@ accountRouter.post('/refresh_token',validateRequestBody(refreshTokenValidationSc
 accountRouter.put('/profile',validateRequestBody(updateUserDetailsValidationSchema),userAuthenticationMiddleware,updateUserDetails)
 
 
+accountRouter.get('/verify-email',verifyEmailLink)
 
 export default accountRouter

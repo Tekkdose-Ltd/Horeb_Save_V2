@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+      <script src="https://js.stripe.com/clover/stripe.js"></script>
+</head>
+<body>
+
+
+    <button onclick=" async ()=>{
+      const { error } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                // Return URL where the user is redirected after the payment
+                return_url: 'your-website.com',
+            },
+        });
+     }">jjjejj</button>
+
+    <script>
+        var stripe = Stripe('pk_test_51QlBFpGWOu1hpDE5sgEKsMMSe67GC2d4nvN9wEqLnadMUo1IDKeuwxR1VsYzp7aQPgKb1JvUOr011qZxD5bLo92i000orlusAQ',{
+            
+        });
+
+        var elements = stripe.elements({
+  clientSecret: 'pi_3SdnLjI34FKEKrzs1UYUDnw7_secret_affgCWEujJSDFSWG7axv74iBH',
+});
+
+ 
+    const paymentElement = elements.create('payment');
+    paymentElement.mount('#payment-element');
+
+    
+    </script>
+    
+</body>
+</html>

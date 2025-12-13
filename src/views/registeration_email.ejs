@@ -1,0 +1,92 @@
+ <!--<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Email verification</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    
+    
+</head>
+<body style="margin:0%; padding:0%;   ">
+
+  <nav style="width:100%; height: 10vh; background-color: black; padding:6px; ">
+     <img style="height:60px; width:60px; background-color: black; margin-left:20px;" src="/" /> 
+     <p>Horeb Save</p>
+  </nav>
+
+  
+    
+ <div>
+
+  <div class="cn" style="width:100%; display: flex; align-items: center; justify-content: center;  padding:8px;">
+    
+    <img alt="body image"  src="/"  style="min-height:50vh; min-width:90vw; background-color: #6b0c0c;"/>
+ 
+  </div>
+  
+  <a href="<%= data.verify_email_link %>" style="font-weight: 600;" >verify email</a>
+ </div>
+
+  
+
+
+   
+    
+</body>
+</html>  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Verification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#ffffff; overflow-x: hidden; box-sizing: border-box;">
+
+  <!-- Logo Container -->
+  <div style="background-color:#000; padding:20px 20px; text-align: left;">
+    <img src="/"  alt="BlueBreed Logo" style="height:50px; width:50px;">
+  </div>
+
+
+  
+
+  <!-- Email Text Container -->
+  <div style="padding:40px 10%; line-height:1.6; color:#333333;">
+    <h1 style="font-size:24px; margin-bottom:20px;">You’ve successfully signed up to Horeb Save</h1>
+    <p style="font-size:16px; margin:0 0 20px 0;">Hi <strong><%= data.fullName %></strong>,</p>
+    <p style="font-size:16px; margin:0 0 20px 0;">
+      Thank you for signing up! Your <strong>Horeb Save</strong>  account has been successfully created.</p>
+
+    <p style="font-size:16px; margin:0 0 20px 0;"> We’re glad to have you with us.</p>
+
+    <p style="font-size:16px; margin:0 0 20px 0;"> Let the saving begin → <a  href="<%= data.verify_email_link  %>" >[Verify Email]</a></p>
+
+    <p style="font-size:16px; margin:0 0 20px 0;"> Cheers, </p>
+<p>Horeb Save Team</p>
+   
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color:rgba(245, 248, 255, 1); padding:20px 10%; text-align:center; font-size:14px; color:#555;">
+    <p style="margin:10px 0; line-height: 25px;">
+      Need help? <a href="/" style="color:rgba(26, 194, 63, 1); text-decoration:none; font-size: 14px;">Contact our support team</a>  or no longer interested in our newsletters?
+      <a href="/" style="color:rgba(26, 194, 63, 1); text-decoration:none; font-size: 14px;">Unsubscribe</a> Want to give us feedback? Let us know what you think on our 
+      <a href="/" style="color:rgba(26, 194, 63, 1); text-decoration:none; font-size: 14px;">feedback site</a>
+    </p>
+
+    <div style="display:flex; justify-content: center; gap:10px; margin-top:20px;">
+      <img src="https://res.cloudinary.com/dqveobrhy/image/upload/v1753355600/utt2h8ex9aaznpmoggqq.svg" style="height:20px; width:20px;"/>
+   
+      <img src="https://res.cloudinary.com/dqveobrhy/image/upload/v1753354925/vd20tei3cup1hsy0xiie.svg" style="height:20px; width:20px;"/>
+    
+       <img src="https://res.cloudinary.com/dqveobrhy/image/upload/v1753355897/fznuf27hfqkoq8i8eis5.png" style="height:20px; width:20px;"/>
+      <img src="https://res.cloudinary.com/dqveobrhy/image/upload/v1753356097/o16aq6xo8tviolvpxhe7.svg" style="height:20px; width:20px;"/>
+    
+    </div>
+  </div>
+
+</body>
+</html>
