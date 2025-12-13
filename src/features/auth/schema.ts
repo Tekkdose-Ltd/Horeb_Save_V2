@@ -2,6 +2,7 @@ import zod, { z } from 'zod'
 
 export const CreateNewAccountValidationSchema = zod.object({
     email:zod.email().nonempty(),
+    surety_email:zod.email().nonempty(),
     password:zod.string().nonempty(),
     first_name:zod.string().min(2).max(30).nonempty(),
     last_name:zod.string().min(2).max(30).nonempty(),

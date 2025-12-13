@@ -7,6 +7,7 @@ import swaggersetup from "./src/config/api-docummentation/swaggersetup";
 import cors from "cors";
 import dotenv from "dotenv";
 import { groupInvite } from './src/features/groups/route/groups';
+import PaymentGateWay from './src/features/payment/paymentSetup';
 dotenv.config();
 
 
@@ -32,7 +33,13 @@ app.get('/api/groups/:groupId/members/:memberId/ratings',(req,res)=>{
     console.log(`${req.params}`)
     res.send('Horeb Save Backend is running')
 })
+app.get('/webhook/payment/response',(req,res)=>{
 
+  console.log( `${req.body}`)
+
+  res.status(200).end()
+
+})
 
 //handle general error of the app
 app.use(errorHandler)
@@ -40,9 +47,21 @@ app.use(errorHandler)
 
 //connect to mongose db before starting sever
 connectDB().then((e)=>{
-     app.listen(3050,()=>{
+     app.listen(3050,async()=>{
            console.log('Listening to port 3050')
- 
+
+           try {
+
+             const payment = await PaymentGateWay.getPaymentGateWayInstance()
+
+       //    const session = await  payment.create_payment_intent('benjoe',300000,'NGN')
+//
+         //  console.log(session)
+            
+           } catch (error:any) {
+            console.log(`error ${error.message}`)
+           }
+  
  
 })
   
