@@ -117,7 +117,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
             }
  })
 
-/*
+
  await sendMail({
             receiver:req.body.surety_email,
             subject:'Horeb Save Guarantor Verification',
@@ -128,7 +128,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
              
               verify_email_link:verify_email_link
             }
- })*/
+ })
 
   await new ValidateUserAndRefererEmail({
         who_to_validate:'user_email',
@@ -138,14 +138,16 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
       
   }).save()
 
-  /*await new ValidateUserAndRefererEmail({
+  await new ValidateUserAndRefererEmail({
         who_to_validate:'referer_email',
-        email_to_validate:req.body.email,
+        email_to_validate:req.body.surety_email,
         magic_link:verify_email_link,
-        temp_data:req.body
+        temp_data:req.body,
+        standing_for:req.body.email
+        
       
   }).save()
-*/
+
   res.status(SERVER_STATUS.SUCCESS).json({
         title:'Create New Account Message',
         status:SERVER_STATUS.SUCCESS,
