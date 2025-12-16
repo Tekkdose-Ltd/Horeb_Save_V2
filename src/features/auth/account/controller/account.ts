@@ -117,7 +117,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
             }
  })
 
-
+/*
  await sendMail({
             receiver:req.body.surety_email,
             subject:'Horeb Save Guarantor Verification',
@@ -128,7 +128,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
              
               verify_email_link:verify_email_link
             }
- })
+ })*/
 
   await new ValidateUserAndRefererEmail({
         who_to_validate:'user_email',
@@ -138,19 +138,19 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
       
   }).save()
 
-  await new ValidateUserAndRefererEmail({
+  /*await new ValidateUserAndRefererEmail({
         who_to_validate:'referer_email',
         email_to_validate:req.body.email,
         magic_link:verify_email_link,
         temp_data:req.body
       
   }).save()
-
+*/
   res.status(SERVER_STATUS.SUCCESS).json({
         title:'Create New Account Message',
         status:SERVER_STATUS.SUCCESS,
         successful:true,
-        message:"Email sent to verify your email address and email sent to your surety !!!!",
+        message:"Email sent to verify your email address  !!!!",
        data:{isEmailSent:true}
       })
 
@@ -184,7 +184,7 @@ export const verifyEmailLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
     const validateMagicLink = await ValidateUserAndRefererEmail.findOne({magic_link:process?.env?. base_url?.concat('api/v1/horebSave/auth/verify-email?code=').concat(magicLinkCode)})
 
 
-    if(validateMagicLink && validateMagicLink.who_to_validate === 'user_email' && validateMagicLink.surety_consent){
+    if(validateMagicLink && validateMagicLink.who_to_validate === 'user_email'){
 
 
 
@@ -200,11 +200,11 @@ export const verifyEmailLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
 
       await newAccount.save()
 
-      //res.redirect(process?.env?.FRONTEND_BASE_URL!!.concat('/login?verified=true'))
+      res.redirect(process?.env?.FRONTEND_BASE_URL!!.concat('/login'))
 
-      const token = jwt.sign({email:validateMagicLink.temp_data.email,first_name:validateMagicLink.temp_data.first_name,last_name:validateMagicLink.temp_data.last_name},process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!)
+   //   const token = jwt.sign({email:validateMagicLink.temp_data.email,first_name:validateMagicLink.temp_data.first_name,last_name:validateMagicLink.temp_data.last_name},process?.env?.APP_SECRET_TOKEN_SIGNER_KEY!!)
 
-      res.status(SERVER_STATUS.CREATED).json({
+      /*res.status(SERVER_STATUS.CREATED).json({
         title:'Create New Account Message',
         status:SERVER_STATUS.CREATED,
         successful:true,
@@ -214,56 +214,12 @@ export const verifyEmailLink = async (req:TypedRequest<{}>,res:TypedResponse<Res
         token,
 
         }
-      })
+      })*/
      
      
 
         return
-    }else if(validateMagicLink && validateMagicLink.who_to_validate === 'user_email' && !validateMagicLink.surety_consent){
-          await validateMagicLink.updateOne({user_validated_email:true})
-        res.status(SERVER_STATUS.SUCCESS).json({
-        title:'Create New Account Message',
-        status:SERVER_STATUS.SUCCESS,
-        successful:true,
-        message:"Email validated",
-        
-      })
-    }else if(validateMagicLink && validateMagicLink.who_to_validate === 'referer_email' && validateMagicLink.user_validated_email){
-
-         const salt = await passwordHasher.genSalt(10)
-
-         const hashedPassword  = await passwordHasher.hash(validateMagicLink.temp_data.password,salt)
-
-
-     const newAccount = new newAccountModel({
-        ...validateMagicLink.temp_data,
-        password:hashedPassword
-     })
-
-      await newAccount.save()
-
-      //res.redirect(process?.env?.FRONTEND_BASE_URL!!.concat('/login?verified=true'))
-
-     
-      res.status(SERVER_STATUS.SUCCESS).json({
-        title:'Guarantor Verification',
-        status:SERVER_STATUS.SUCCESS,
-        successful:true,
-        message:"Process completed",
-        
-      })
-     
-    }else if (validateMagicLink && validateMagicLink.who_to_validate === 'referer_email' && !validateMagicLink.user_validated_email){
-       await validateMagicLink.updateOne({surety_consent:true})
-
-          res.status(SERVER_STATUS.SUCCESS).json({
-        title:'Guarantor Verification',
-        status:SERVER_STATUS.SUCCESS,
-        successful:true,
-        message:"Process completed",
-        
-      })
-    }else
+    }
 
      res.status(SERVER_STATUS.BAD_REQUEST).json({
           title:'Verify Email Link',
