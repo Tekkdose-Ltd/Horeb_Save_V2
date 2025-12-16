@@ -5,7 +5,7 @@ import { boolean } from "zod";
 const newUSerAndRefererEmailSchema =  new mongoose.Schema({
     who_to_validate: { type: String, required: true,enum:['user_email','referer_email'] },
     email_to_validate: { type: String, required: true },
-    standing_for:{ type: String, required: true },
+    standing_for:{ type: String },
     magic_link: { type: String, required: true },
     user_validated_email:{ type: boolean },
     surety_consent:{ type: boolean },
