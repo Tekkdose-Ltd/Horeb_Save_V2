@@ -594,7 +594,7 @@ export const updateUserDetails = async (req:TypedRequest<any>,res:TypedResponse<
 
 
 const generateMagicLinkCode = async () =>{
-   
+    console.log(`fired magic link...`)
    const isMagicLinkGeneratedBefore =  await ValidateUserAndRefererEmail.findOne({magic_link:process?.env?. base_url?.concat('verify-email?code=').concat(v4())})
 
    while(isMagicLinkGeneratedBefore){
