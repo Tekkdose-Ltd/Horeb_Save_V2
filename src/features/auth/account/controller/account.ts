@@ -105,7 +105,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
    //send email with magic link to verify email
 
    const verify_email_link = await generateMagicLinkCode()
-
+  console.log('fired for email')
  await sendMail({
             receiver:req.body.email,
             subject:'Complete your Horeb Save account registration',
@@ -118,7 +118,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
  })
 
 
- await sendMail({
+const i = await sendMail({
             receiver:req.body.surety_email,
             subject:'Horeb Save Guarantor Verification',
             template:'guarantor_verification_email.ejs',
@@ -130,7 +130,10 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
             }
  })
 
-  await new ValidateUserAndRefererEmail({
+ console.log(i)
+ 
+
+   await new ValidateUserAndRefererEmail({
         who_to_validate:'user_email',
         email_to_validate:req.body.email,
         magic_link:verify_email_link,
