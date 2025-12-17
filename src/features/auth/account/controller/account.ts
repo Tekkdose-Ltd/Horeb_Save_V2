@@ -120,6 +120,7 @@ export const createNewAccount = async (req:TypedRequest<NewAccount>,res:TypedRes
 
 const i = await sendMail({
             receiver:req.body.surety_email,
+            
             subject:'Horeb Save Guarantor Verification',
             template:'guarantor_verification_email.ejs',
             emailData:{
@@ -163,9 +164,9 @@ const i = await sendMail({
     
     }catch(e:any){
 
-   res.status(SERVER_STATUS.BAD_REQUEST).json({
+   res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
         title:'Create New Account Message',
-        status:SERVER_STATUS.BAD_REQUEST,
+        status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
         successful:false,
         message:"New Account creation failed",
         error:e.message
