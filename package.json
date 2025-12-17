@@ -8,7 +8,7 @@
     "start": "ts-node App.ts",
     "dev": "nodemon App.ts",
     "build": "  npm install &&   tsc  &&  cp -r src/views build/src  ",
-    "start:prod": "node build/App.js"
+    "start:prod": "node build/index.js"
   },
   "keywords": [],
   "author": "",
@@ -43,7 +43,9 @@
     "nodemon": "^3.1.11",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "socket": "^1.1.48",
     "socket.io": "^4.8.1",
+    "stripe": "^20.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",

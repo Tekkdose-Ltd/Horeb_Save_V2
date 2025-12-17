@@ -27,6 +27,10 @@ const accountRouter = express_1.default.Router();
  *                                       type: string
  *                                       format: email
  *                                       description: email required to setup account.
+ *                                     surety_email:
+ *                                       type: string
+ *                                       format: email
+ *                                       description: emailof the guarantor.
  *                                     password:
  *                                       type: string
  *
@@ -380,4 +384,5 @@ accountRouter.post('/refresh_token', (0, validateRequestBody_1.default)(schema_1
  *
  */
 accountRouter.put('/profile', (0, validateRequestBody_1.default)(schema_1.updateUserDetailsValidationSchema), userAuthenticationMiddleware_1.default, account_1.updateUserDetails);
+accountRouter.get('/verify-email', account_1.verifyEmailLink);
 exports.default = accountRouter;

@@ -7,6 +7,7 @@ exports.updateUserDetailsValidationSchema = exports.refreshTokenValidationSchema
 const zod_1 = __importDefault(require("zod"));
 exports.CreateNewAccountValidationSchema = zod_1.default.object({
     email: zod_1.default.email().nonempty(),
+    surety_email: zod_1.default.email().nonempty(),
     password: zod_1.default.string().nonempty(),
     first_name: zod_1.default.string().min(2).max(30).nonempty(),
     last_name: zod_1.default.string().min(2).max(30).nonempty(),
