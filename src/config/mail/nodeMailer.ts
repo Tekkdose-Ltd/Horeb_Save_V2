@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import path from "path";
 import ejs from "ejs";
 import dotenv from "dotenv";
+import sgMail from '@sendgrid/mail'
 dotenv.config();
 
 
@@ -12,7 +13,13 @@ interface MailProps {
   template: string;
 }
 
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!!)
+
+console.log(process.env.SENDGRID_API_KEY)
+
 console.log(process.env.notification_email);
+
 const nodeMail = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -34,13 +41,21 @@ const sendMail = async (data: MailProps) => {
   const htmltoSend = await ejs.renderFile(emailTemplatePath, {
     data: data.emailData
   });
+
+  return sgMail
+  .send({
+    from:'theo@tekkdose.co.uk',
+    to: data.receiver,
+    subject: data.subject,
+    html: htmltoSend
+  })
   
-  return nodeMail.sendMail({
+ /* return nodeMail.sendMail({
     sender: process.env.notification_email,
     to: data.receiver,
     subject: data.subject,
     html: htmltoSend
-  });
+  });*/
 };
 
 export default sendMail;
