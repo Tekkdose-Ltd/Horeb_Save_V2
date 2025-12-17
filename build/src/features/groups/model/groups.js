@@ -40,7 +40,7 @@ const groupSchema = new mongoose_1.default.Schema({
         default: null
     },
     start_date: {
-        type: mongoose_1.default.SchemaTypes.String,
+        type: mongoose_1.default.SchemaTypes.Date,
         default: null
     },
     completed_at: {
@@ -93,6 +93,14 @@ const groupSchema = new mongoose_1.default.Schema({
         type: String,
         enum: ['draft', 'active', 'completed', 'cancelled'],
         default: 'active'
+    },
+    max_number_of_members: {
+        type: mongoose_1.default.SchemaTypes.Number,
+        default: 0
+    },
+    circles_completed: {
+        type: mongoose_1.default.SchemaTypes.Number,
+        default: 0
     }
 }, { timestamps: true });
 exports.newGroupModel = mongoose_1.default.model('groups', groupSchema);

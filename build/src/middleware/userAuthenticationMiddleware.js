@@ -49,7 +49,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             });
             return;
         }
-        req.user = Object.assign(Object.assign({}, validToken), { _id: isUserValid._id });
+        req.user = Object.assign(Object.assign({}, validToken), { _id: isUserValid._id, role: isUserValid.role });
         next();
     }
     catch (error) {

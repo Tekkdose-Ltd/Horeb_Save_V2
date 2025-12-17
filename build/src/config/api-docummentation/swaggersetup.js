@@ -27,6 +27,7 @@ const options = {
         ],
     },
     apis: ['./src/swagger-api/*.ts', './src/features/auth/account/route/accountRoute.ts', './src/features/groups/route/groups.ts',
+        './src/features/waitlist/routes/waitlist.ts'
     ]
 };
 exports.default = (0, swagger_jsdoc_1.default)(options);
