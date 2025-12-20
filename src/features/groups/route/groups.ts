@@ -1,9 +1,10 @@
   import express from 'express'
 import userAuthenticationMiddleware from '../../../middleware/userAuthenticationMiddleware'
 import validateRequestBody from '../../../middleware/validateRequestBody'
-import { createNewGroupValidationSchema, joinGroupValidationSchema, newGroupTrustRatingValidationSchema } from '../shema'
+import { activateContributionValidationSchema, createNewGroupValidationSchema, joinGroupValidationSchema, newGroupTrustRatingValidationSchema } from '../shema'
 import { createNewGroup, getMyGroups, getPublicGroups, joinGroupByInviteCode } from '../controller/groups'
 import { newGroupTrustRating } from '../controller/trustRatings'
+import { startGroupContribution } from '../controller/contributions'
 
 
 const groupsRouter =  express.Router()
@@ -282,6 +283,57 @@ groupsRouter.get('/my',userAuthenticationMiddleware,getMyGroups)
 
 groupsRouter.post('/rating',userAuthenticationMiddleware,validateRequestBody(newGroupTrustRatingValidationSchema),newGroupTrustRating)
 
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/groups/activate_contribution:
+ *     post:
+ *        summary: Activate contribution as admin of group.
+ *        tags: [Groups]
+ *        requestBody:
+ *                 description: User data
+ *                 required: true
+ *                 content:   
+ *                     application/json:
+ *                           schema:
+ *                             type: object
+ *                             properties:
+ *                                     group_id: 
+ *                                       type: string
+ *                                       
+ *                                       description: group id.
+ *                                      
+ *                                     creator_of_group_id:
+ *                                       type: string
+ *                                       
+ *                                       description:  creator_of_group_id.
+ *                                      
+ *                                    
+ *                           required:
+ *                               -email
+ *                               -password
+ *        responses:
+ *                200:
+ *                 description: New account created successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+
+groupsRouter.post('/activate_contribution',userAuthenticationMiddleware,validateRequestBody(activateContributionValidationSchema),startGroupContribution)
 
 
 export default groupsRouter

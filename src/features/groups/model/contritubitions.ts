@@ -14,6 +14,16 @@ const contributionModelSchema =  new mongoose.Schema({
     default:false
     },
 
+     constribution_ended:{
+    type:mongoose.Schema.Types.Boolean,
+    default:false
+    },
+   
+    member_completed_payment:{
+    type:mongoose.Schema.Types.Boolean,
+    default:false
+    },
+
     amount:{
         type:mongoose.Schema.Types.Number,
         required:[true,'contribution amount must be provided']
@@ -30,8 +40,17 @@ const contributionModelSchema =  new mongoose.Schema({
                 type:mongoose.Schema.ObjectId,
                 ref:'users'
              },
+                transactionDetails:{
+                type:mongoose.Schema.ObjectId,
+                ref:'transactions'
+                },
+               payment_status:{
+                type:mongoose.SchemaTypes.String,
+                enum:['paid','not_paid'],
+                default:'not_paid'
+             },
             
-    contributed_at:{
+       contributed_at:{
         type:mongoose.Schema.Types.Date,
         default:Date.now()
     },
@@ -44,7 +63,7 @@ const contributionModelSchema =  new mongoose.Schema({
 
 
 
-});
+},{timestamps:true});
 
 export const ContributionModel = mongoose.model('contributions',contributionModelSchema);
    

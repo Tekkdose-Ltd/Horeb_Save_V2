@@ -42,6 +42,10 @@ const groupSchema = new mongoose.Schema({
      },
 
     
+   active_contribution_id:{
+     type:mongoose.SchemaTypes.ObjectId,
+     default:null
+     },
 
      next_payout_date:{
      type:mongoose.SchemaTypes.String,

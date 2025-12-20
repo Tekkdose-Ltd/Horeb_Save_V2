@@ -12,8 +12,10 @@
  
 
    private constructor () {
+
     this.stripe_instance = new stripe(this.SECRET_KEY)
      }
+
 
      create_payment_intent = async (customer:string,amount:number,currency:string) =>{
         
@@ -29,27 +31,14 @@
 
    
       
+      stripeInstance  = () =>{
+        return this.stripe_instance
+      }
+
+
       
 
-    initPayment = async () =>{
-
-     return    await this.stripe_instance?.checkout.sessions.create({
-            mode:'payment',
-            line_items:[
-                {
-                   price_data:{
-                    currency:'NGN',
-                    unit_amount:4000,
-                
-                   },
-                   quantity:1
-                    
-                }
-            ],
-            success_url:`http://localhost:3050/webhook/payment/response?sessionId={CHECKOUT_SESSION_ID}`,
-            cancel_url:`http://localhost:3050/webhook/payment/canceled`
-        })
-     }
+  
 
 
 
