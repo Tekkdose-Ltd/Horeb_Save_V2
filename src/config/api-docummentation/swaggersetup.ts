@@ -23,7 +23,7 @@ import swaggerJsDoc from 'swagger-jsdoc'
     ],
     },
     apis:['./src/swagger-api/*.ts','./src/features/auth/account/route/accountRoute.ts','./src/features/groups/route/groups.ts',
-        './src/features/waitlist/routes/waitlist.ts'
+        './src/features/waitlist/routes/waitlist.ts','./src/features/payment/routes.ts'
     ]
 }
 

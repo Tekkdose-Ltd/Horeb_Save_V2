@@ -51,3 +51,12 @@ export const newGroupTrustRatingValidationSchema = zod.object({
 
 })
 
+
+export const activateContributionValidationSchema = zod.object({
+
+   group_id:zod.string().nonempty(),
+   creator_of_group_id:zod.string().nonempty()
+
+
+})
+

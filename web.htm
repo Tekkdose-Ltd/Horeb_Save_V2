@@ -4,35 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-      <script src="https://js.stripe.com/clover/stripe.js"></script>
+     <script src="https://js.stripe.com/clover/stripe.js"></script>   
+   
+     
+
 </head>
 <body>
 
 
-    <button onclick=" async ()=>{
-      const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                // Return URL where the user is redirected after the payment
-                return_url: 'your-website.com',
-            },
-        });
-     }">jjjejj</button>
+ <div id="payment-element">
+    <!-- Stripe.js injects the Payment Element here -->
+
+  </div>
+
+  <button id="me" onclick="add">Pay</button>
+
+
+
+   
 
     <script>
-        var stripe = Stripe('pk_test_51QlBFpGWOu1hpDE5sgEKsMMSe67GC2d4nvN9wEqLnadMUo1IDKeuwxR1VsYzp7aQPgKb1JvUOr011qZxD5bLo92i000orlusAQ',{
+
+
+   function add (e){
+  console.log('ooooo...')
+  }
+
+        var stripe = Stripe('pk_test_51SIVFYKSCpTmyL3vM2AP8gx4BBQmydpfGXHAWvJkN1x6vPUm1BU2PWxqYE3uLO1Fw86o2bpE99GaFOElp8fRipBU00bhcIE0Ro',{
             
         });
 
-        var elements = stripe.elements({
-  clientSecret: 'pi_3SdnLjI34FKEKrzs1UYUDnw7_secret_affgCWEujJSDFSWG7axv74iBH',
-});
+         const options = {
+   clientSecret: 'pi_3SfoUHKSCpTmyL3v0kQ5Y5Tr_secret_lIZriAq63OGvky821BZWai4n2',
+    appearance: { theme: 'stripe' }, // Customize appearance
+  };
+
+  // Set up Stripe.js and Elements
+  let elements = stripe.elements(options);
+
+  // Create and mount the Payment Element
+  const paymentElement = elements.create("payment");
+  paymentElement.mount("#payment-element");
+
+   
+
+//const paymentElement = elements.create('payment');
 
  
-    const paymentElement = elements.create('payment');
-    paymentElement.mount('#payment-element');
+     async function handle  (e){
+        e.preventDefault()
+   console.log('kksksk')
 
-    
+
+const { error, paymentIntent  } = await stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      // Redirect URL after successful payment or 3D Secure authentication
+      return_url: "your-site.com", 
+    },
+     redirect: "if_required",
+  });
+
+
+   console.log(error)
+
+    console.log(paymentIntent.status)
+
+    if (paymentIntent && paymentIntent.status === "succeeded") {
+  // 2. SUCCESS: Handle same-page completion
+  // Show a success message or update your UI here
+  console.log("Payment successful! No redirect happened.");
+  showSuccessMessage();
+} else {
+  // 3. REDIRECT: This branch is rarely reached 
+  // because Stripe usually redirects before the promise resolves 
+  // if paymentIntent.status is 'requires_action'.
+}
+
+     
+    }
+
+   
+
     </script>
     
 </body>
