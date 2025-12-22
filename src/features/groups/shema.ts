@@ -18,7 +18,7 @@ export const createNewGroupValidationSchema =  zod.object({
       contribution_amount:zod.number().gte(100),
      
    
-      max_number_of_members:zod.number().gte(3).nonoptional(),
+      max_number_of_members:zod.number().gte(2).nonoptional(),
        
       is_public:zod.boolean()
    

@@ -146,9 +146,11 @@ export const joinGroupByInviteCode = async (req:TypedRequest<{invite_code:string
 
             }
 
+            console.log(`group${members}:${user._id}`)
+
             //check if you are already  member
-             if(members.filter(member=>member.id === user)){
-              res.status(SERVER_STATUS.BAD_REQUEST).json({
+          if(members.find(member=>member.id === user._id)){
+         res.status(SERVER_STATUS.BAD_REQUEST).json({
         title:'Join Group By Invitation Message',
         status:SERVER_STATUS.BAD_REQUEST,
         successful:false,
