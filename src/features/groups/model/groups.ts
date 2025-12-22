@@ -128,6 +128,33 @@ const groupSchema = new mongoose.Schema({
      default:0
     },
 
+    admin_payment_approval:[{
+       group_id:{
+        
+        type:mongoose.SchemaTypes.ObjectId,
+     default:null
+     },
+     contribution_id:{
+        
+        type:mongoose.SchemaTypes.ObjectId,
+     default:null
+     },
+       current_round:{
+        
+        type:Number,
+     default:null
+     },
+     active_contribution_url:{
+      type:mongoose.SchemaTypes.ObjectId,
+     default:null
+     },
+     transactions:[{
+    type:mongoose.SchemaTypes.ObjectId,
+     default:null
+     }]
+
+    }],
+
     circles_completed:{
     type:mongoose.SchemaTypes.Number,
      default:0

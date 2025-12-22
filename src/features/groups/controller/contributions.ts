@@ -2,6 +2,7 @@ import SERVER_STATUS from "../../../util/interface/CODE"
 import { ResponseBodyProps } from "../../../util/interface/ResponseBodyProps"
 import TypedRequest from "../../../util/interface/TypedRequest"
 import TypedResponse from "../../../util/interface/TypedResponse"
+import { startContributionSchedule } from "../../backgroundTask/contributionService"
 import { transactionModel } from "../../payment/model/transactionModel"
 import PaymentGateWay from "../../payment/paymentSetup"
 import { ContributionModel } from "../model/contritubitions"
@@ -86,12 +87,16 @@ if(contribution){
         constribution_started:true,
         amount:group.contribution_amount,
         current_round:1,
-        member_due_for_payment:group.members[generateRandomNumber(0,group.members.length)].id
+        member_due_for_payment:group.members[await generateRandomNumber(0,group.members.length)].id
      }).save()
 
   await  group.updateOne({contribution_started:true,start_date:Date.now(),current_round:1,next_payout_date:nextPayoutDate.toDateString(),active_contribution_id:newConstribution?._id})
 
-        res.status(SERVER_STATUS.SUCCESS).json({
+
+  console.log('called...') 
+  await startContributionSchedule(newConstribution._id.toString(),group._id.toString(),nextPayoutDate)
+       
+  res.status(SERVER_STATUS.SUCCESS).json({
             title:'Start Group Contribution Message',
             status:SERVER_STATUS.SUCCESS,
             successful:true,

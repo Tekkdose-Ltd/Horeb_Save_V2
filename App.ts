@@ -9,6 +9,8 @@ import dotenv from "dotenv";
 import { groupInvite } from './src/features/groups/route/groups';
 import PaymentGateWay from './src/features/payment/paymentSetup';
 import hookRouter from './src/features/payment/hook/routes/route';
+import { BackgroundService, Services } from './src/features/backgroundTask/backgroundServiceClass';
+import { startContributionSchedule } from './src/features/backgroundTask/contributionService';
 dotenv.config();
 
 
@@ -48,12 +50,9 @@ connectDB().then((e)=>{
            console.log('Listening to port 3050')
 
            try {
-//acct_1SIVFYKSCpTmyL3v
-         //    const payment = await PaymentGateWay.getPaymentGateWayInstance()
-
-     // const session = await  payment.create_payment_intent('benjoe',300000,'NGN')
-//
-       //   console.log(session)
+           BackgroundService.getInstance()
+   //startContributionSchedule('90977665','67865444',new Date())
+            
             
            } catch (error:any) {
             console.log(`error ${error.message}`)
