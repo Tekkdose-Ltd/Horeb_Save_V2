@@ -41,7 +41,7 @@ export const startContributionSchedule = async (contribution_id:string,group_id:
 export const checkDueContribution  = async (contribution_id:string,group_id:string,jobScheduler:Agenda) =>{
      
     try {
-       
+       console.log('background calling.....')
         const contribution = await ContributionModel.findOne({_id:contribution_id,group_id:group_id})
 
         const group = await newGroupModel.findOne({_id:group_id,active_contribution_id:contribution_id})
