@@ -2,7 +2,7 @@
 import userAuthenticationMiddleware from '../../../middleware/userAuthenticationMiddleware'
 import validateRequestBody from '../../../middleware/validateRequestBody'
 import { activateContributionValidationSchema, createNewGroupValidationSchema, joinGroupValidationSchema, newGroupTrustRatingValidationSchema } from '../shema'
-import { createNewGroup, getMyGroups, getPublicGroups, joinGroupByInviteCode } from '../controller/groups'
+import { createNewGroup, getMyActiveGroups, getMyGroups, getPublicGroups, joinGroupByInviteCode } from '../controller/groups'
 import { newGroupTrustRating } from '../controller/trustRatings'
 import { startGroupContribution } from '../controller/contributions'
 
@@ -211,6 +211,41 @@ groupsRouter.post('/join',validateRequestBody(joinGroupValidationSchema),userAut
  */
 
 groupsRouter.get('/my',userAuthenticationMiddleware,getMyGroups)
+
+
+
+/**
+ * @swagger
+ * /api/v1/horebSave/groups/my-active-groups:
+ *     get:
+ *        summary: Get user active  groups.
+ *        tags: [Groups]
+ *        
+ *        responses:
+ *                200:
+ *                 description: Groups fetched successfully.
+ *        content:
+ *           application/json:
+ *                shema:
+ *                     type: object
+ *                     properties:
+ *                         email:
+ *                            type: string
+ *                            format: email
+ *                    
+ * 
+ *        
+ *            
+ * 
+ *                    
+ * 
+ *        
+ *            
+ *  
+ * 
+ */
+
+groupsRouter.get('/my-active-groups',userAuthenticationMiddleware,getMyActiveGroups)
 
 
 
