@@ -5,6 +5,7 @@ import TypedRequest from "../../../util/interface/TypedRequest"
 import TypedResponse from "../../../util/interface/TypedResponse"
 import { newGroupModel } from "../model/groups"
 import {v4} from 'uuid'
+import { ContributionModel } from "../model/contritubitions"
 
 interface NewGroup {
 
@@ -245,7 +246,7 @@ export const getMyGroups = async (req:TypedRequest<{}>,res:TypedResponse<Respons
 
     try {
      
-      const groups = await newGroupModel.find({'members.id':user._id})
+      const groups = await newGroupModel.find({'members.id':user._id}).populate('members.id',['email','first_name','last_name','profile_image_url','total_groups_completed'])
 
       if(groups){
 
@@ -324,5 +325,63 @@ export const getPublicGroups =  async (req:TypedRequest<{}>,res:TypedResponse<Re
 
 
 }
+
+
+export const getMyActiveGroups = async (req:TypedRequest<{}>,res:TypedResponse<ResponseBodyProps>) =>{
+
+    const user = req.user
+
+    try {
+
+      
+     
+      const groups = await newGroupModel.find({'members.id':user._id,start_date:{$ne:null}}).populate('members.id',['email','first_name','last_name','profile_image_url','total_groups_completed'])
+
+
+      
+      if(groups){
+
+         res.status(SERVER_STATUS.SUCCESS).json({
+        title:'My Groups Message',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"Groups fetched successfully",
+        data:groups
+     
+      })
+
+   return
+      }
+
+
+       res.status(SERVER_STATUS.SUCCESS).json({
+        title:'My Active Groups Message',
+        status:SERVER_STATUS.SUCCESS,
+        successful:true,
+        message:"No Active groups yet",
+     
+      })
+
+
+    } catch (error:any) {
+
+        res.status(SERVER_STATUS.INTERNAL_SERVER_ERROR).json({
+        title:'My Active Groups Message',
+        status:SERVER_STATUS.INTERNAL_SERVER_ERROR,
+        successful:false,
+        message:"An error occured",
+        error:error.message
+     
+      })
+      
+    }
+
+
+
+}
+
+
+
+
 
 

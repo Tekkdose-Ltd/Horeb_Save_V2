@@ -26,7 +26,7 @@
     <script>
 
 
-   function add (e){
+  /* function add (e){
   console.log('ooooo...')
   }
 
@@ -84,6 +84,17 @@ const { error, paymentIntent  } = await stripe.confirmPayment({
      
     }
 
+*/
+ fetch(' http://127.0.0.1:53340/videos/hls/1709074915746/master.m3u8?__hls_origin_url=https%3A%2F%2Fdpcst9y3un003.cloudfront.net%2Fvideos%2Fhls%2F1709074915746%2Fmaster.m3u8',{
+    method:'GET',
+    headers:{
+        'Content-Type':'application/x-mpegURL'
+    }
+ }).then(res=>res.text()).then(data=>{
+    console.log(data)
+ }).catch(err=>{
+    console.log(err)
+ })
    
 
     </script>
