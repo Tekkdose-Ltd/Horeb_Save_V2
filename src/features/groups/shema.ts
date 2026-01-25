@@ -13,9 +13,9 @@ export const createNewGroupValidationSchema =  zod.object({
      description: zod.string().nonempty(),
      
      
-      frequency:zod.enum(['weekly', 'monthly','bi-weekly']),
+      frequency:zod.enum(['hourly','weekly', 'monthly','bi-weekly']),
      
-      contribution_amount:zod.number().gte(100),
+      contribution_amount:zod.number().gte(50),
      
    
       max_number_of_members:zod.number().gte(2).nonoptional(),

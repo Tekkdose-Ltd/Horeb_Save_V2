@@ -11,6 +11,7 @@ import PaymentGateWay from './src/features/payment/paymentSetup';
 import hookRouter from './src/features/payment/hook/routes/route';
 import { BackgroundService, Services } from './src/features/backgroundTask/backgroundServiceClass';
 import { startContributionSchedule } from './src/features/backgroundTask/contributionService';
+import { countryCurrency } from './src/util/countryCurrency';
 dotenv.config();
 
 
@@ -52,8 +53,13 @@ connectDB().then((e)=>{
            try {
            BackgroundService.getInstance()
    //startContributionSchedule('90977665','67865444',new Date())
-            
-            
+      
+      //  const result = await  (await PaymentGateWay.getPaymentGateWayInstance()).send_money_to_due_user('acct_1StWnXKiJCcuMAf0',2000,'ngn')
+
+        //const result = await  (await PaymentGateWay.getPaymentGateWayInstance()).auto_charge_user('pm_1StYrXKxLbpn3b97Xrwb5923',2000,'cus_TrGGKVZ7itM7xv',"uwuuqwhsjllakak","7637272727",1)
+      // console.log('result',result)
+
+
            } catch (error:any) {
             console.log(`error ${error.message}`)
            }

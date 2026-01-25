@@ -1,7 +1,14 @@
 import mongoose from "mongoose";
 
 const contributionModelSchema =  new mongoose.Schema({
-  
+  is_contribution_cancelled:{
+    type:Boolean,
+    default:false
+  },
+  processingPayment:{
+    type:mongoose.Schema.Types.Boolean,
+    default:false
+  },
     group_id:{
         type:mongoose.Schema.ObjectId,
         required:[true,'group id must be provided'],

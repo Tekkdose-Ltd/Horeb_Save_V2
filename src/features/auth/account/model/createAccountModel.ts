@@ -51,6 +51,18 @@ const NewAccountSchema = new mongoose.Schema({
     type:mongoose.Schema.Types.String,
     default:null
    },
+   stripe_connect_acc_id:{
+    type:mongoose.Schema.Types.String,
+    default:null
+   },
+   stripe_connect_pm_id:{
+    type:mongoose.Schema.Types.String,
+    default:null
+   },
+   stripe_process_completed:{
+    type:mongoose.Schema.Types.String,
+    default:false
+   },
     trust_score:{
     type:mongoose.Schema.Types.Number,
     default:0

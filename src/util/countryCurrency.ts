@@ -1,4 +1,4 @@
-[
+export const countryCurrency = [
   {
     "countries": ["United States", "Canada", "Mexico", "Australia", "New Zealand", "Singapore"],
     "currency_code": "USD"
