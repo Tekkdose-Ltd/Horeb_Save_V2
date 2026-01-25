@@ -6,6 +6,7 @@ import TypedResponse from "../../../util/interface/TypedResponse"
 import { newGroupModel } from "../model/groups"
 import {v4} from 'uuid'
 import { ContributionModel } from "../model/contritubitions"
+import { newAccountModel } from "../../auth/account/model/createAccountModel"
 
 interface NewGroup {
 
@@ -14,7 +15,7 @@ interface NewGroup {
      description: string,
      
      
-      frequency:'weekly' | 'monthly' |'bi-weekly'
+      frequency:'hourly' |'weekly' | 'monthly' |'bi-weekly'
      
       contribution_amount:number
      
@@ -127,7 +128,18 @@ export const joinGroupByInviteCode = async (req:TypedRequest<{invite_code:string
         const user = req.user
         const group_invitation_code = req.body.invite_code
       
-     
+       const userDetails = await newAccountModel.findOne({_id:user._id})
+
+        if(!userDetails?.stripe_connect_acc_id || !userDetails.stripe_customer_id){
+            res.status(SERVER_STATUS.BAD_REQUEST).json({
+        title:'Join Group By Invitation Message',
+        status:SERVER_STATUS.BAD_REQUEST,
+        successful:false,
+        message:"Cannot join group please setup up your payment details.",
+        
+      })
+          return
+        }
 
           let group = await newGroupModel.findOne({invite_code:group_invitation_code})
 

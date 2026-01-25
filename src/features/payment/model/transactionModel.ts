@@ -12,6 +12,20 @@ const TransactionSchema =  new  mongoose.Schema({
        type:Object,
         required:true  
     },
+     payment_success_details:{
+       type:Object,
+        required:true  
+    },
+
+     current_round:{
+   type:mongoose.Schema.Types.String
+     },
+     ref:{
+   type:mongoose.Schema.Types.String
+     },
+     description:{
+   type:mongoose.Schema.Types.String
+     },
 
       transaction_status:{
        type:String,
@@ -33,9 +47,16 @@ const TransactionSchema =  new  mongoose.Schema({
 
      contribution_id:{
       type:mongoose.Schema.Types.ObjectId,
-        required:true,
+        
         ref:'contributions'  
     },
+
+    customer_id:{
+      type:mongoose.Schema.Types.String,
+       required:true,
+       
+    },
+
 
 },{timestamps:true})
 

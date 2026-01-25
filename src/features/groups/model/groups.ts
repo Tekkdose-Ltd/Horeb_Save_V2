@@ -23,7 +23,7 @@ const groupSchema = new mongoose.Schema({
 
       frequency:{
       type:mongoose.SchemaTypes.String,
-      enum:['weekly','monthly','bi-weekly']
+      enum:['hourly','weekly','monthly','bi-weekly']
     },
 
     contribution_amount:{
