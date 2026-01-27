@@ -21,7 +21,7 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
 
      auto_charge_user = async  (payment_method:any,amount:number,customerID:any,groupId:any,memberID:any,currentRound:any,description:any) =>{
      return this.stripe_instance?.paymentIntents.create({
-  amount,
+  amount:Math.round(amount * 100),
   currency: 'usd',
   customer: customerID,
   payment_method: payment_method,
@@ -57,6 +57,8 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
        )
      }
 
+
+     
       send_money_to_due_user = async (dueMember:string,amount:number,currency:string,group_id:any,member_id:any,contribution_id:any) =>{
          const transfer = await this.stripe_instance?.transfers.create({
             amount: Math.round(amount * 100),
@@ -84,7 +86,8 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
      create_stripe_account_for_new_member = async (email:any,name:any)=>{
     return await this.stripeInstance()?.customers.create({
       email,
-      name
+      name,
+    
     })
 
 
@@ -98,6 +101,7 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
         transfers:{requested:true}
       },
       email,
+      
       
     })
 

@@ -11,37 +11,10 @@ const paymentRouter =  express.Router()
 /**
  * @swagger
  * /api/v1/horebSave/payment/linkCard:
- *     post:
+ *     get:
  *        summary: Link card to make payment  .
  *        tags: [Payment]
- *        requestBody:
- *                 description: User data
- *                 required: true
- *                 content:   
- *                     application/json:
- *                           schema:
- *                             type: object
- *                             properties:
- *                                     member_id: 
- *                                       type: string
- *                                       
- *                                       description: member id.
- *                                     group_id: 
- *                                       type: string
- *                                       
- *                                       description: group id.
- *                                     amount: 
- *                                       type: number
- *                                       
- *                                       description: Amount.
- *                                    
- * 
- * 
- * 
- * 
- *                           required:
- *                               -email
- *                               -password
+ *       
  *        responses:
  *                200:
  *                 description: New account created successfully.
@@ -62,7 +35,7 @@ const paymentRouter =  express.Router()
  */
 
 
-paymentRouter.post('/linkCard',userAuthenticationMiddleware,validateRequestBody(contributionValidationSchema),linkCardForPayment)
+paymentRouter.get('/linkCard',userAuthenticationMiddleware,linkCardForPayment)
 
 
 /**
