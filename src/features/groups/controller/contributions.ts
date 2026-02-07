@@ -54,10 +54,16 @@ export const startGroupContribution = async (req:TypedRequest<{group_id:string,c
       }
 
       let membersDetails:any[] = []
+     
+
+   
    
        for (const member of group.members){
            membersDetails.push(await newAccountModel.findOne({_id:member.id}))
+            
        }
+
+
        const memberDetailsInvalid = membersDetails?.filter((member)=>{
         return !member?.stripe_connect_acc_id || !member?.stripe_customer_id
        })
@@ -71,6 +77,16 @@ export const startGroupContribution = async (req:TypedRequest<{group_id:string,c
             })
 
        }
+
+        for (const member of membersDetails){
+     await new transactionModel({
+    user_id:member._id,
+    customer_id:member?.stripe_customer_id,
+    group_id:group._id,
+    transaction_status:'initialized',
+    amount:group.contribution_amount
+   }).save()
+        }
 
     //update next payout date based on frequency
     let nextPayoutDate = new Date()
@@ -181,15 +197,15 @@ if (successfulOnes.length === membersDetails.length) {
 export const linkCardForPayment = async (req:TypedRequest<{group_id:string,amount:number,member_id:string}>,res:TypedResponse<ResponseBodyProps>) =>{
 
     const user = req.user
-    const {group_id,member_id,amount} = req.body
+  
 
 
     try{
 
-        const group = await newGroupModel.findOne({_id:group_id,'members.id':member_id})
+     //   const group = await newGroupModel.findOne({_id:group_id,'members.id':member_id})
        
 
-        if(!group){
+      /*  if(!group){
             return res.status(SERVER_STATUS.BAD_REQUEST).json({
                 title:'Group Contribution Message',
                 status:SERVER_STATUS.BAD_REQUEST,
@@ -230,10 +246,22 @@ export const linkCardForPayment = async (req:TypedRequest<{group_id:string,amoun
                 successful:false,
                 message:'Payment already made wait for next round.'
             })
- }
+ }*/
+
 
 const userData = await newAccountModel.findOne({_id:user._id})
       //init payment for contribution 
+
+      if(userData?.stripe_connect_pm_id && userData.stripe_process_completed){
+         return res.status(SERVER_STATUS.BAD_REQUEST).json({
+                title:'Group Contribution Message',
+                status:SERVER_STATUS.BAD_REQUEST,
+                successful:false,
+                message:'Card already linked.'
+        
+            })
+      }
+
 
    const payment = await PaymentGateWay.getPaymentGateWayInstance()
    const currency =  await getCountryCurreny(user.country)
@@ -252,14 +280,7 @@ const userData = await newAccountModel.findOne({_id:user._id})
    
    const paymentDetails = await payment.contritube_to_group_payment_setUp(userData?.stripe_customer_id??customerID)
 
-   await new transactionModel({
-    user_id:member_id,
-    customer_id:customerID,
-    group_id:group._id,
-    transaction_status:'initialized',
-    payment_intent_details:paymentDetails,
-    amount
-   }).save()
+   
 
         return res.status(SERVER_STATUS.SUCCESS).json({
                 title:'Group Contribution Message',
