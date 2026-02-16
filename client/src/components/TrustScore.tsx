@@ -8,12 +8,30 @@ interface TrustScoreProps {
     onTimePaymentRate: number;
     completedGroups: number;
   };
+  user?: {
+    createdAt?: Date | string | null;
+  };
 }
 
-export function TrustScore({ stats }: TrustScoreProps) {
+export function TrustScore({ stats, user }: TrustScoreProps) {
   const trustScore = stats?.trustScore || 0;
   const onTimeRate = stats?.onTimePaymentRate || 0;
   const completedGroups = stats?.completedGroups || 0;
+
+  // Format member since date
+  const formatMemberSince = () => {
+    if (!user?.createdAt) return 'Recently';
+    
+    try {
+      const date = new Date(user.createdAt);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+    } catch {
+      return 'Recently';
+    }
+  };
 
   const getTrustLevel = (score: number) => {
     if (score >= 4.5) return { label: "Excellent", color: "text-secondary" };
@@ -63,7 +81,9 @@ export function TrustScore({ stats }: TrustScoreProps) {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Member Since</span>
-            <span className="font-medium">Jan 2024</span>
+            <span className="font-medium" data-testid="text-member-since">
+              {formatMemberSince()}
+            </span>
           </div>
         </div>
 

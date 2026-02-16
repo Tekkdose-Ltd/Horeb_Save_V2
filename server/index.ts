@@ -1,23 +1,31 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { attachUser } from "./auth";
+import { db } from "./db";
 
 const app = express();
 
-// CORS configuration for AWS deployment
+// CORS configuration - Allow any origin in development
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    "http://localhost:5000",
-    "http://localhost:3000",
-    "http://localhost:8080",
-    process.env.FRONTEND_URL, // Your Netlify URL
-    "https://your-app-name.netlify.app", // Replace with your actual Netlify domain
-  ].filter(Boolean);
+  
+  // In development, allow any origin
+  if (process.env.NODE_ENV === "development") {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+  } else {
+    // In production, only allow specific origins
+    const allowedOrigins = [
+      "https://horebsavebackend.onrender.com",
+      process.env.FRONTEND_URL,
+      "https://your-app-name.netlify.app",
+    ].filter(Boolean);
 
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+    }
   }
 
   res.header("Access-Control-Allow-Credentials", "true");
@@ -39,6 +47,24 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "horeb-save-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    },
+  })
+);
+
+// Attach user to request if authenticated
+app.use(attachUser);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -90,10 +116,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve on the port specified in environment variable PORT
-  // Default to 5000 for local development, 8080 for AWS deployment
-  const defaultPort = process.env.NODE_ENV === "production" ? 8080 : 5000;
-  const port = parseInt(process.env.PORT || defaultPort.toString(), 10);
+  // Serve on the port specified in environment variable FRONTEND_PORT or PORT
+  // Default to 5174 for local development, 8080 for AWS deployment
+  const defaultPort = process.env.NODE_ENV === "production" ? 8080 : 5174;
+  const port = parseInt(process.env.FRONTEND_PORT || process.env.PORT || defaultPort.toString(), 10);
   
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);

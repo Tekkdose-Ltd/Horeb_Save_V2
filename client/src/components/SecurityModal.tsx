@@ -11,15 +11,18 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { 
   Shield, 
   Lock, 
   LogOut, 
-  ExternalLink, 
   Monitor, 
   Smartphone,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,15 +43,85 @@ interface SecurityModalProps {
 export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
   const { toast } = useToast();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const { data: sessions = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/sessions"],
+    queryKey: ["/sessions"],
     enabled: isOpen,
   });
 
+  // Change password mutation (using dummy API for now)
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      // TODO: Replace with actual API endpoint when backend is ready
+      // const response = await apiRequest("POST", "/auth/change-password", data);
+      // return response.json();
+      
+      // Dummy API - simulate success after 1 second
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ success: true, message: "Password changed successfully" });
+        }, 1000);
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Your password has been changed successfully!",
+      });
+      setShowPasswordForm(false);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change password. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate passwords
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    changePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+    });
+  };
+
   const logoutAllMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/auth/logout-all");
+      const response = await apiRequest("POST", "/auth/logout-all");
       return response.json();
     },
     onSuccess: () => {
@@ -102,43 +175,141 @@ export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
               </h3>
               <Card className="p-4">
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">Password</p>
-                      <p className="text-sm text-muted-foreground">
-                        Your password is managed through your Replit account
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open("https://replit.com/account", "_blank")}
-                      data-testid="button-change-password"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Replit Settings
-                    </Button>
-                  </div>
+                  {!showPasswordForm ? (
+                    <>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">Password</p>
+                          <p className="text-sm text-muted-foreground">
+                            Update your password to keep your account secure
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPasswordForm(true)}
+                          data-testid="button-change-password"
+                        >
+                          Change Password
+                        </Button>
+                      </div>
 
-                  <Separator />
+                      <Separator />
 
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">Two-Factor Authentication</p>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open("https://replit.com/account/security", "_blank")}
-                      data-testid="button-2fa-settings"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Configure
-                    </Button>
-                  </div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">Two-Factor Authentication</p>
+                          <p className="text-sm text-muted-foreground">
+                            Add an extra layer of security to your account
+                          </p>
+                          <span className="inline-block mt-2 px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded">
+                            Coming Soon
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          data-testid="button-2fa-settings"
+                        >
+                          Configure
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="current-password">Current Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="current-password"
+                            type={showCurrentPassword ? "text" : "password"}
+                            value={passwordData.currentPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                            placeholder="Enter current password"
+                            required
+                            data-testid="input-current-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="new-password"
+                            type={showNewPassword ? "text" : "password"}
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                            placeholder="Enter new password"
+                            required
+                            minLength={8}
+                            data-testid="input-new-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Must be at least 8 characters long
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="confirm-password"
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                            placeholder="Confirm new password"
+                            required
+                            data-testid="input-confirm-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          type="submit"
+                          disabled={changePasswordMutation.isPending}
+                          data-testid="button-submit-password"
+                        >
+                          {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                          }}
+                          data-testid="button-cancel-password"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </Card>
             </div>
@@ -198,40 +369,6 @@ export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
               </Button>
             </div>
 
-            {/* Privacy Settings Section */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Privacy Settings</h3>
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">Profile Visibility</p>
-                      <p className="text-sm text-muted-foreground">
-                        Control who can see your profile information
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" data-testid="button-profile-visibility">
-                      Members Only
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">Transaction History</p>
-                      <p className="text-sm text-muted-foreground">
-                        Who can view your transaction history
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" data-testid="button-transaction-privacy">
-                      Private
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
             {/* Security Tips */}
             <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900 p-4">
               <div className="flex items-start gap-3">
@@ -241,10 +378,11 @@ export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
                     Security Tips
                   </h4>
                   <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• Enable two-factor authentication for enhanced security</li>
+                    <li>• Use a strong, unique password for your account</li>
+                    <li>• Change your password regularly to maintain security</li>
                     <li>• Regularly review your active sessions</li>
-                    <li>• Use a strong, unique password for your Replit account</li>
                     <li>• Logout from all devices if you suspect unauthorized access</li>
+                    <li>• Two-factor authentication will be available soon for enhanced security</li>
                   </ul>
                 </div>
               </div>

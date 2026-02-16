@@ -49,29 +49,29 @@ function HowItWorksCarousel() {
     >
       <CarouselContent>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
               src="/images/HowItWorks_Img.png"
               alt="How Horeb Save Works"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
               src="/images/moneyJar.png"
               alt="Money Jar - Save Together"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
               src="/images/trustedSecure.png"
               alt="Trusted and Secure Platform"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
@@ -132,7 +132,7 @@ export default function Landing() {
                 size="sm"
               >
                 <a
-                  href="/api/login"
+                  href="/register"
                   className="flex items-center space-x-1 sm:space-x-2"
                 >
                   <span>Get Started</span>
@@ -168,7 +168,7 @@ export default function Landing() {
                   className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
                   data-testid="button-start-saving"
                 >
-                  <a href="/api/login">Start Saving Today</a>
+                  <a href="/register">Start Saving Today</a>
                 </Button>
                 <Button
                   variant="outline"
@@ -459,7 +459,7 @@ export default function Landing() {
                     data-testid="button-join-now"
                   >
                     <a
-                      href="/api/login"
+                      href="/register"
                       className="flex items-center space-x-2"
                     >
                       <span>Join Now - It's Free</span>

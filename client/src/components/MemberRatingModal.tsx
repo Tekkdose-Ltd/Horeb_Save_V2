@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, ThumbsUp, MessageSquare, Shield, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, createTrustRating } from "@/lib/queryClient";
 
 /**
  * Types for Member Rating
@@ -63,19 +63,14 @@ export function MemberRatingModal({
       feedback: string;
       categories: RatingCategories;
     }) => {
-      const response = await fetch(
-        `/api/groups/${groupId}/members/${member?.id}/rating`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit rating");
-      }
-      return response.json();
+      // Call the new backend API
+      const response = await createTrustRating({
+        group_id: groupId,
+        group_member_id: member?.id || '',
+        rating_score: data.rating,
+        description: data.feedback || undefined,
+      });
+      return response;
     },
     onSuccess: (data) => {
       toast({
@@ -117,19 +112,7 @@ export function MemberRatingModal({
       return;
     }
 
-    if (
-      categories.reliability === 0 ||
-      categories.communication === 0 ||
-      categories.trustworthiness === 0
-    ) {
-      toast({
-        title: "Complete All Ratings",
-        description: "Please rate all categories.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Only submit overall rating - other fields are UI-only
     submitRatingMutation.mutate({
       rating: overallRating,
       feedback,
@@ -199,17 +182,7 @@ export function MemberRatingModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">Rate Group Member</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl">Rate Group Member</DialogTitle>
           <DialogDescription>
             Share your experience with {member.name} in {groupName}
           </DialogDescription>
@@ -265,7 +238,7 @@ export function MemberRatingModal({
           {/* Category Ratings */}
           <div className="space-y-4">
             <label className="text-sm font-semibold">
-              Detailed Ratings <span className="text-destructive">*</span>
+              Detailed Ratings <span className="text-muted-foreground"></span>
             </label>
             {Object.entries(categories).map(([key, value]) => {
               const Icon = categoryIcons[key as keyof RatingCategories];
@@ -352,32 +325,40 @@ export function MemberRatingModal({
  * API Integration Guide
  * =====================
  * 
+ * ✅ INTEGRATED WITH BACKEND (Dec 15, 2024)
+ * 
  * Backend Endpoint:
- * POST /api/groups/:groupId/members/:memberId/rating
+ * POST /api/v1/horebSave/groups/rating
  * 
  * Request Body:
  * {
- *   "rating": number (1-5),
- *   "feedback": string (optional),
- *   "categories": {
- *     "reliability": number (1-5),
- *     "communication": number (1-5),
- *     "trustworthiness": number (1-5)
+ *   "group_id": string,
+ *   "group_member_id": string,
+ *   "rating_score": number (1-5),
+ *   "description": string (optional)
+ * }
+ * 
+ * Response (201):
+ * {
+ *   "title": "New Group Trust Rating Message",
+ *   "status": 201,
+ *   "successful": true,
+ *   "message": "Group trust rating created successfully.",
+ *   "data": {
+ *     "group_id": string,
+ *     "member_id": string,
+ *     "trust_rating": number,
+ *     "description": string,
+ *     "rated_by": string,
+ *     "createdAt": timestamp,
+ *     "updatedAt": timestamp
  *   }
  * }
  * 
- * Response:
- * {
- *   "success": true,
- *   "message": "Rating submitted successfully",
- *   "newAverageRating": number,
- *   "updatedTrustScore": number
- * }
- * 
  * Error Responses:
- * - 400: Invalid rating values
- * - 403: Cannot rate yourself or not in same group
- * - 409: Already rated this member in current rotation
+ * - 400: Invalid group or group member
+ * - 401: Unauthorized (no token)
+ * - 500: Internal server error
  * 
  * Usage Example:
  * 

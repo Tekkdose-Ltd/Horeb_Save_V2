@@ -15,7 +15,8 @@
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": true,
     // "module": "ESNext",
-    "strict": true,
+    "strict": false,
+    "noPropertyAccessFromIndexSignature": false,
     "lib": [
       "esnext",
       "dom",

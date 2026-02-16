@@ -52,7 +52,7 @@ function HowItWorksCarousel() {
         <CarouselItem>
           <div className="p-1">
             <img
-              src="/images/HowItWorks_Img.png"
+              src="/images/createGroupImage.jpg"
               alt="How Horeb Save Works"
               className="w-full h-auto object-contain rounded-lg shadow-lg"
             />
@@ -61,7 +61,7 @@ function HowItWorksCarousel() {
         <CarouselItem>
           <div className="p-1">
             <img
-              src="/images/moneyJar.png"
+              src="/images/contributeImage.jpg"
               alt="Money Jar - Save Together"
               className="w-full h-auto object-contain rounded-lg shadow-lg"
             />
@@ -70,7 +70,7 @@ function HowItWorksCarousel() {
         <CarouselItem>
           <div className="p-1">
             <img
-              src="/images/trustedSecure.png"
+              src="/images/payoutImage.jpg"
               alt="Trusted and Secure Platform"
               className="w-full h-auto object-contain rounded-lg shadow-lg"
             />
@@ -127,22 +127,12 @@ export default function Landing() {
                 </a>
               </div>
 
-              {/* Join Waitlist Button */}
-              {/* <Button
-                onClick={() => setWaitlistOpen(true)}
-                data-testid="button-join-waitlist"
-                className="bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
-                size="sm"
-              >
-                <span>Join Waitlist</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
-              </Button> */}
-               {/* Get Started Button */}
-                <Button
+
+              <Button
                 data-testid="button-get-started"
                 className="bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
                 size="sm"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => window.location.href = '/login'}
               >
                 <span>Get Started</span>
                 <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
@@ -176,7 +166,7 @@ export default function Landing() {
                   className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
                   data-testid="button-get-started-hero"
                 >
-                  <a href="/dashboard">Get Started</a>
+                  <a href="/login">Get Started</a>
                 </Button>
                 <Button
                   variant="outline"
@@ -200,7 +190,7 @@ export default function Landing() {
                 <div className="flex items-center space-x-2">
                   <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
                   <span className="text-xs sm:text-sm text-gray-600">
-                    10,000+ Members
+                    4,000+ Members
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -461,12 +451,18 @@ export default function Landing() {
                 {/* Right side - Button */}
                 <div className="flex justify-center lg:justify-end">
                   <Button
-                    size="lg"
-                    className="bg-white text-black hover:bg-gray-100 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center space-x-2 shadow-lg w-full sm:w-auto max-w-xs"
-                    data-testid="button-join-waitlist-cta"
+                    asChild
+                    data-testid="button-login"
+                    className="bg-zinc-50 text-black hover:bg-primary hover:text-white transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
+                    size="sm"
                   >
-                    <span>Join Waitlist</span>
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <a
+                      href="/register"
+                      className="flex items-center space-x-1 sm:space-x-2"
+                    >
+                      <span>Get Started</span>
+                      <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -640,21 +636,21 @@ export default function Landing() {
           <div className="border-t border-gray-600 mt-8 sm:mt-12 pt-6 sm:pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
               <p className="text-gray-400 text-sm mb-4 sm:mb-0">
-                © 2024 Horeb Save. All rights reserved. Building financial
+                © 2026 Horeb Save. All rights reserved. Building financial
                 communities together.
               </p>
               <div className="flex space-x-4 sm:space-x-6">
                 <a
-                  href="/privacy-policy"
+                  href="/privacy"
                   className="text-gray-400 hover:text-white text-sm transition-colors"
                 >
-                  Privacy
+                  Privacy Policy
                 </a>
                 <a
-                  href="/terms-of-service"
+                  href="/terms"
                   className="text-gray-400 hover:text-white text-sm transition-colors"
                 >
-                  Terms
+                  Terms of Service
                 </a>
               </div>
             </div>
@@ -663,9 +659,9 @@ export default function Landing() {
       </footer>
 
       {/* Waitlist Modal */}
-      <WaitlistModal 
-        isOpen={waitlistOpen} 
-        onClose={() => setWaitlistOpen(false)} 
+      <WaitlistModal
+        isOpen={waitlistOpen}
+        onClose={() => setWaitlistOpen(false)}
       />
     </div>
   );

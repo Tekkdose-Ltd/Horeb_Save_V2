@@ -157,7 +157,7 @@ export function PaymentMethodsModal({
     error,
     refetch,
   } = useQuery<PaymentMethod[]>({
-    queryKey: ["/api/payment-methods"],
+    queryKey: ["/payment-methods"],
     enabled: isOpen,
     retry: (failureCount, error: any) => {
       console.log("Payment methods query error:", error);
@@ -184,7 +184,7 @@ export function PaymentMethodsModal({
   const createSetupIntentMutation = useMutation({
     mutationFn: async () => {
       console.log("Creating setup intent...");
-      const response = await apiRequest("POST", "/api/create-setup-intent");
+      const response = await apiRequest("POScreate-setup-intent");
       return response.json();
     },
     onSuccess: (data) => {
@@ -211,12 +211,12 @@ export function PaymentMethodsModal({
     mutationFn: async (paymentMethodId: string) => {
       const response = await apiRequest(
         "DELETE",
-        `/api/payment-methods/${paymentMethodId}`,
+        `/payment-methods/${paymentMethodId}`,
       );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ["/payment-methods"] });
       toast({
         title: "Success",
         description: "Payment method removed",
@@ -234,7 +234,7 @@ export function PaymentMethodsModal({
   const handleSuccess = () => {
     setShowAddForm(false);
     setClientSecret("");
-    queryClient.invalidateQueries({ queryKey: ["/api/payment-methods"] });
+    queryClient.invalidateQueries({ queryKey: ["/payment-methods"] });
   };
 
   const handleCancel = () => {

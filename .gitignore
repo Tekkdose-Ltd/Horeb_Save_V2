@@ -65,10 +65,6 @@ vite.config.ts.*
 # Archives
 *.tar.gz
 
-# set up documents
-WAITLIST_INTEGRATION.md
-GOOGLE_SHEETS_SETUP.md
-MAINTENANCE_MODE.md
-QUICK_SETUP.md
-AWS_DEPLOYMENT_GUIDE.md
-BACKEND_API_REQUIREMENTS.md
+# Implementation and setup documentation (draft files)
+*.md
+!README.md

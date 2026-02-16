@@ -17,7 +17,7 @@ async function getCredentials() {
   connectionSettings = await fetch(
     "https://" +
       hostname +
-      "/api/v2/connection?include_secrets=true&connector_names=sendgrid",
+      "/v2/connection?include_secrets=true&connector_names=sendgrid",
     {
       headers: {
         Accept: "application/json",

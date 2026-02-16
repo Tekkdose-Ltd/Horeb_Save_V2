@@ -19,10 +19,10 @@ interface SidebarProps {
 
 export function Sidebar({ className = "" }: SidebarProps) {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const { data: notifications } = useQuery({
-    queryKey: ["/api/notifications"],
+    queryKey: ["/notifications"],
     retry: false,
   });
 
@@ -31,7 +31,7 @@ export function Sidebar({ className = "" }: SidebarProps) {
     : 0;
 
   const userName = user
-    ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User"
+    ? `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User"
     : "User";
 
   const userEmail = user?.email || "user@example.com";
@@ -79,20 +79,20 @@ export function Sidebar({ className = "" }: SidebarProps) {
   ];
 
   return (
-    <aside className={`bg-card border-r border-border h-screen sticky top-0 flex flex-col ${className}`}>
+    <aside className={`bg-card border-r border-border h-screen sticky top-0 flex p-4 bg-white-50 rounded-xl mx-4 my-6 flex-col ${className}`}>
       {/* Logo */}
       <div className="p-6 border-b border-border">
-        <Link href="/dashboard" className="flex items-center space-x-3">
+        <Link href="/" className="flex items-center space-x-3">
           <HorebSaveLogoSmall className="w-10 h-10" />
           <div>
             <h1 className="text-xl font-bold text-foreground">Horeb Save</h1>
-            <p className="text-xs text-muted-foreground">Save Together, Grow Together</p>
+            {/* <p className="text-xs text-muted-foreground">Save Together, Grow Together</p> */}
           </div>
         </Link>
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-b border-border">
+      <div className="p-2  bg-zinc-200 rounded-lg border-border">
         <div className="flex items-center space-x-3">
           <Avatar className="h-12 w-12">
             <AvatarImage src={user?.profileImageUrl || undefined} />
@@ -100,13 +100,13 @@ export function Sidebar({ className = "" }: SidebarProps) {
               {getInitials(userName)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1  min-w-0">
             <p className="font-semibold text-sm text-foreground truncate">
               {userName}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
+            {/* <p className="text-xs text-muted-foreground truncate">
               {userEmail}
-            </p>
+            </p> */}
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export function Sidebar({ className = "" }: SidebarProps) {
         <Button
           variant="ghost"
           className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted"
-          onClick={() => window.location.href = "/api/logout"}
+          onClick={logout}
         >
           <LogOut className="w-5 h-5 mr-3" />
           Logout

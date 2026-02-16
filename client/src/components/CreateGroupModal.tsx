@@ -37,7 +37,7 @@ const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required").max(100, "Name too long"),
   description: z.string().optional(),
   maxMembers: z.number().min(2, "Minimum 2 members").max(20, "Maximum 20 members"),
-  contributionAmount: z.number().min(1, "Contribution amount is required"),
+  contributionAmount: z.number().min(100, "Minimum contribution is £100").max(1000000, "Amount too large"),
   frequency: z.enum(["weekly", "bi-weekly", "monthly"]),
   isPublic: z.boolean().default(false),
 });
@@ -59,7 +59,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       name: "",
       description: "",
       maxMembers: 6,
-      contributionAmount: 500,
+      contributionAmount: 100,
       frequency: "monthly",
       isPublic: false,
     },
@@ -67,16 +67,27 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: CreateGroupFormData) => {
-      const response = await apiRequest("POST", "/api/groups", {
-        ...data,
-        contributionAmount: data.contributionAmount.toString(),
-        totalRounds: data.maxMembers,
-      });
-      return response.json();
+      // Transform frontend field names to backend snake_case
+      // Match exact schema order from backend
+      const payload = {
+        name: data.name,
+        is_public: data.isPublic,
+        description: data.description || "",
+        max_number_of_members: data.maxMembers,
+        frequency: data.frequency,
+        contribution_amount: Number(data.contributionAmount), // Ensure it's a number
+      };
+      
+      console.log('📤 Creating group with payload:', JSON.stringify(payload, null, 2));
+      const response = await apiRequest("POST", "/groups", payload);
+      const result = await response.json();
+      console.log('✅ Create group response:', result);
+      return result;
     },
     onSuccess: (group) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/groups/my"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/my-active-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["/user/stats"] });
       
       toast({
         title: "Group Created",
@@ -86,7 +97,11 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       form.reset();
       onClose();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('❌ Create group error:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error data:', error.response?.data);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -94,14 +109,20 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
       
+      // Show detailed error message from backend
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error
+        || error.message 
+        || "Failed to create group";
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to create group",
+        title: "Error Creating Group",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -204,12 +225,21 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="500"
+                        min="100"
+                        step="10"
+                        placeholder="100"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          // Prevent negative values
+                          field.onChange(Math.max(0, value));
+                        }}
                         data-testid="input-contribution-amount"
                       />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Minimum contribution: £100
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,13 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { z } from "zod";
+import {
+  createUser,
+  authenticateUser,
+  getUserById,
+  requireAuth,
+} from "./auth";
+import { db } from "./db";
 
 /**
- * STUB ROUTES FILE
+ * API ROUTES
  * 
- * This file contains minimal stub endpoints that return placeholder data.
- * The frontend is fully functional and ready to consume real APIs.
- * 
- * Replace these stubs with your actual backend implementation.
+ * Real authentication + stub endpoints for other features
  */
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -16,55 +21,325 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (req, res) => {
     res.json({
       status: "ok",
-      message: "Frontend-only mode - Backend ready for implementation",
+      message: "Server running with authentication",
       timestamp: new Date().toISOString(),
+      database: db ? "connected" : "not configured",
     });
   });
 
   // ==================== AUTHENTICATION ENDPOINTS ====================
   
-  // Get current user (stub)
-  app.get("/api/auth/user", (req, res) => {
-    res.status(401).json({ 
-      message: "No authentication configured - Backend implementation needed" 
-    });
+  // Get current user
+  app.get("/api/auth/user", async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const user = await getUserById(req.session.userId);
+      
+      if (!user) {
+        req.session.destroy(() => {});
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error: any) {
+      console.error("Error getting user:", error);
+      res.status(500).json({ message: error.message || "Failed to get user" });
+    }
   });
 
-  // Login endpoint (stub)
-  app.post("/api/auth/login", (req, res) => {
-    res.status(501).json({ 
-      message: "Login endpoint not implemented - Add your auth here" 
-    });
+  // Login endpoint
+  app.post("/api/auth/login", async (req, res) => {
+    if (!db) {
+      return res.status(503).json({ 
+        message: "Database not configured. Add DATABASE_URL to .env" 
+      });
+    }
+
+    try {
+      const schema = z.object({
+        email: z.string().email("Invalid email address"),
+        password: z.string().min(1, "Password is required"),
+      });
+
+      const { email, password } = schema.parse(req.body);
+
+      const user = await authenticateUser(email, password);
+
+      if (!user) {
+        return res.status(401).json({ 
+          message: "Invalid email or password" 
+        });
+      }
+
+      // Create session
+      req.session.userId = user.id;
+
+      res.json({ 
+        message: "Login successful",
+        user 
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0].message 
+        });
+      }
+      console.error("Login error:", error);
+      res.status(500).json({ 
+        message: error.message || "Login failed" 
+      });
+    }
   });
 
-  // Register endpoint (stub)
-  app.post("/api/auth/register", (req, res) => {
-    res.status(501).json({ 
-      message: "Register endpoint not implemented - Add your auth here" 
-    });
+  // Register endpoint - Full registration with all profile details
+  app.post("/api/auth/register", async (req, res) => {
+    if (!db) {
+      return res.status(503).json({ 
+        message: "Database not configured. Add DATABASE_URL to .env" 
+      });
+    }
+
+    try {
+      const { updateProfileSchema } = await import("@shared/schema");
+      const { users } = await import("@shared/schema");
+      
+      const schema = z.object({
+        email: z.string().email("Invalid email address"),
+        password: z.string()
+          .min(8, "Password must be at least 8 characters")
+          .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+          .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+          .regex(/[0-9]/, "Password must contain at least one number"),
+        confirmPassword: z.string().optional(),
+      }).merge(updateProfileSchema);
+
+      const { email, password, confirmPassword, ...profileData } = schema.parse(req.body);
+
+      // Create user with hashed password
+      const user = await createUser(email, password);
+
+      if (!user) {
+        return res.status(500).json({ 
+          message: "Failed to create user" 
+        });
+      }
+
+      // Update profile with additional information
+      const { eq } = await import("drizzle-orm");
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phoneNumber: profileData.phoneNumber,
+          dateOfBirth: new Date(profileData.dateOfBirth),
+          addressLine1: profileData.addressLine1,
+          addressLine2: profileData.addressLine2 || null,
+          city: profileData.city,
+          postcode: profileData.postcode,
+          country: profileData.country,
+          profileCompleted: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id))
+        .returning();
+
+      // Create session
+      req.session.userId = user.id;
+
+      res.status(201).json({ 
+        message: "Registration successful",
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          profileCompleted: updatedUser.profileCompleted,
+        }
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0].message 
+        });
+      }
+      if (error.message === "Email already exists") {
+        return res.status(409).json({ 
+          message: "An account with this email already exists" 
+        });
+      }
+      console.error("Registration error:", error);
+      res.status(500).json({ 
+        message: error.message || "Registration failed" 
+      });
+    }
   });
 
-  // Logout endpoint (stub)
+  // Logout endpoint
   app.post("/api/auth/logout", (req, res) => {
-    res.status(501).json({ 
-      message: "Logout endpoint not implemented" 
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
     });
   });
 
-  // Update profile (stub)
-  app.put("/api/auth/profile", (req, res) => {
-    res.status(501).json({ 
-      message: "Profile update not implemented" 
+  // Logout redirect endpoint
+  app.get("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+      }
+      res.redirect("/");
     });
+  });
+
+  // Login redirect endpoint
+  app.get("/api/login", (req, res) => {
+    res.redirect("/auth");
+  });
+
+  // Update profile (protected)
+  app.put("/api/auth/profile", requireAuth, async (req, res) => {
+    if (!db) {
+      return res.status(503).json({ 
+        message: "Database not configured. Add DATABASE_URL to .env" 
+      });
+    }
+
+    try {
+      const { updateProfileSchema } = await import("@shared/schema");
+      const { users } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Validate the request body
+      const profileData = updateProfileSchema.parse(req.body);
+
+      // Update the user's profile
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phoneNumber: profileData.phoneNumber,
+          dateOfBirth: new Date(profileData.dateOfBirth),
+          addressLine1: profileData.addressLine1,
+          addressLine2: profileData.addressLine2 || null,
+          city: profileData.city,
+          postcode: profileData.postcode,
+          country: profileData.country,
+          profileCompleted: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, req.session.userId!))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        message: "Profile updated successfully",
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          profileCompleted: updatedUser.profileCompleted,
+        },
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0].message 
+        });
+      }
+      console.error("Profile update error:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to update profile" 
+      });
+    }
   });
 
   // ==================== USER ENDPOINTS ====================
+  
+  // Upload profile image (protected)
+  app.post("/api/user/profile-image", requireAuth, async (req, res) => {
+    try {
+      // TODO: Implement file upload with multer and cloudinary
+      // For now, return a not implemented error with helpful message
+      res.status(501).json({ 
+        message: "Profile image upload endpoint not yet implemented. Please add multer middleware and cloudinary integration.",
+        note: "This endpoint requires: 1) multer for file upload handling, 2) cloudinary configuration for image storage, 3) database update to store profileImageUrl"
+      });
+    } catch (error: any) {
+      console.error("Profile image upload error:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to upload profile image" 
+      });
+    }
+  });
   
   // Get user stats (stub)
   app.get("/api/user/stats", (req, res) => {
     res.status(501).json({ 
       message: "User stats endpoint not implemented" 
     });
+  });
+
+  // ==================== STRIPE PAYMENT ENDPOINTS ====================
+  
+  // Create Stripe Setup Session for linking payment methods (protected)
+  app.post("/api/stripe/setup-session", requireAuth, async (req, res) => {
+    try {
+      // TODO: Implement Stripe Setup Session creation
+      // This endpoint should:
+      // 1. Create a Stripe Customer if user doesn't have one
+      // 2. Create a Setup Intent for payment method collection
+      // 3. Return the Setup Session URL for redirect
+      // 4. Handle webhook for setup completion
+      
+      res.status(501).json({ 
+        message: "Stripe Setup Session endpoint not yet implemented",
+        note: "This endpoint requires: 1) Stripe SDK integration, 2) Customer creation/retrieval, 3) Setup Intent creation, 4) Webhook handling for payment method attached event",
+        requiredEnvVars: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+        nextSteps: [
+          "Install @stripe/stripe-js package",
+          "Create Stripe customer for user",
+          "Generate Setup Intent",
+          "Return checkout session URL",
+          "Setup webhook endpoint for 'setup_intent.succeeded' event"
+        ]
+      });
+    } catch (error: any) {
+      console.error("Stripe setup session error:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to create payment setup session" 
+      });
+    }
+  });
+
+  // Stripe webhook handler for payment events
+  app.post("/api/stripe/webhook", async (req, res) => {
+    try {
+      // TODO: Implement Stripe webhook handler
+      // Handle events: setup_intent.succeeded, payment_method.attached, etc.
+      
+      res.status(501).json({ 
+        message: "Stripe webhook endpoint not yet implemented",
+        note: "This endpoint handles Stripe events for payment method linking and payment processing"
+      });
+    } catch (error: any) {
+      console.error("Stripe webhook error:", error);
+      res.status(500).json({ 
+        message: error.message || "Webhook processing failed" 
+      });
+    }
   });
 
   // ==================== GROUPS ENDPOINTS ====================
@@ -212,12 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== CATCH ALL ====================
   
-  // Any other API route
-  app.all("/api/*", (req, res) => {
-    res.status(404).json({ 
-      message: `API endpoint ${req.method} ${req.path} not found - Backend implementation needed` 
-    });
-  });
+  // Catch-all for undefined routes handled by error middleware
 
   return createServer(app);
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, TrendingUp, Users, ArrowRight, Star } from "lucide-react";
 import { MemberRatingModal } from "@/components/MemberRatingModal";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Types for Payout Rotation
@@ -137,20 +139,40 @@ const dummyGroups: PayoutGroup[] = [
 ];
 
 export function PayoutRotation() {
-  const [selectedGroupId, setSelectedGroupId] = useState<string>(dummyGroups[0]?.id || "");
+  const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState<PayoutMember | null>(null);
   
-  // Find selected group
-  const selectedGroup = dummyGroups.find(g => g.id === selectedGroupId);
+  // Fetch user's payout schedule from API
+  const { data: payoutSchedule, isLoading } = useQuery<{
+    nextPayout?: {
+      groupId: string;
+      groupName: string;
+      date: string;
+      amount: number;
+      payoutAmount?: number;
+      payoutDate?: string;
+      rotationNumber: number;
+    };
+    groups?: PayoutGroup[];
+  }>({
+    queryKey: ["/groups/my-payout-schedule"],
+    enabled: !!user,
+    retry: false,
+  });
+
+  const groups = payoutSchedule?.groups || [];
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(groups[0]?.id || "");
   
-  // Find user's next payout across all groups
-  const userNextPayout = dummyGroups
-    .flatMap(group => 
-      group.members
-        .filter(m => m.id === "demo-user-123" && m.status === "current")
-        .map(m => ({ ...m, groupName: group.name }))
-    )
-    .sort((a, b) => a.payoutDate.getTime() - b.payoutDate.getTime())[0];
+  // Update selected group when data loads
+  if (groups.length > 0 && !selectedGroupId) {
+    setSelectedGroupId(groups[0].id);
+  }
+  
+  // Find selected group
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+  
+  // Get user's next payout from API response
+  const userNextPayout = payoutSchedule?.nextPayout;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", { 
@@ -186,12 +208,53 @@ export function PayoutRotation() {
       .toUpperCase();
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payout Rotation Schedule</CardTitle>
+          <CardDescription>Loading your payout schedule...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!groups || groups.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payout Rotation Schedule</CardTitle>
+          <CardDescription>Track when you and your group members receive payouts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <CalendarDays className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">No Payout Scheduled</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              You don't have any scheduled payouts at the moment.
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Join a group to start earning payouts
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!selectedGroup) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Payout Rotation</CardTitle>
-          <CardDescription>No groups available</CardDescription>
+          <CardDescription>No group selected</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -210,7 +273,7 @@ export function PayoutRotation() {
               <SelectValue placeholder="Select a group" />
             </SelectTrigger>
             <SelectContent>
-              {dummyGroups.map(group => (
+              {groups.map((group) => (
                 <SelectItem key={group.id} value={group.id}>
                   {group.name}
                 </SelectItem>
@@ -234,11 +297,11 @@ export function PayoutRotation() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-primary">
-                  {formatCurrency(userNextPayout.payoutAmount)}
+                  {formatCurrency(userNextPayout.payoutAmount || userNextPayout.amount)}
                 </div>
                 <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
                   <CalendarDays className="w-4 h-4" />
-                  <span>{formatDate(userNextPayout.payoutDate)}</span>
+                  <span>{formatDate(new Date(userNextPayout.payoutDate || userNextPayout.date))}</span>
                 </div>
               </div>
             </div>
@@ -273,8 +336,8 @@ export function PayoutRotation() {
           
           <div className="space-y-2">
             {selectedGroup.members
-              .sort((a, b) => a.rotationNumber - b.rotationNumber)
-              .map((member, index) => (
+              .sort((a: PayoutMember, b: PayoutMember) => a.rotationNumber - b.rotationNumber)
+              .map((member: PayoutMember) => (
                 <div
                   key={member.id}
                   className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
@@ -324,7 +387,7 @@ export function PayoutRotation() {
                       </Badge>
 
                       {/* Rate Member Button - Only show for completed rotations */}
-                      {member.status === "completed" && member.id !== "demo-user-123" && (
+                      {member.status === "completed" && member.id !== user?.id && (
                         <Button
                           size="sm"
                           variant="ghost"

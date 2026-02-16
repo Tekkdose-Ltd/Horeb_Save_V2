@@ -21,7 +21,7 @@ export function Header() {
     // add other properties as needed
   };
 
-  const { user } = useAuth() as { user?: User };
+  const { user, logout } = useAuth() as { user?: User; logout: () => void };
 
   const { data: notifications } = useQuery({
     queryKey: ["/api/notifications"],
@@ -36,7 +36,7 @@ export function Header() {
     : "User";
 
   const navItems = [
-    { href: "/", label: "Dashboard", active: location === "/" },
+    { href: "/dashboard", label: "Dashboard", active: location === "/dashboard" },
     { href: "/groups", label: "My Groups", active: location === "/groups" },
     { href: "/groups", label: "Browse Groups", active: false },
     {
@@ -132,9 +132,13 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="/api/logout" data-testid="menu-logout">
+                  <button 
+                    onClick={logout}
+                    className="w-full text-left cursor-pointer"
+                    data-testid="menu-logout"
+                  >
                     Sign Out
-                  </a>
+                  </button>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

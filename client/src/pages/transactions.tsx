@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Header } from "@/components/Header";
+import { useAuth } from "@/hooks/useAuth";
+import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +16,12 @@ import {
 } from "lucide-react";
 
 export default function Transactions() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState<string>("all");
 
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ["/api/transactions/my"],
+    queryKey: ["/payment/transaction/my"],
+    enabled: !!user,
     retry: false,
   });
 
@@ -80,10 +83,13 @@ export default function Transactions() {
     t.type === 'payout' ? sum + Number(t.amount) : sum, 0) : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar className="w-64" />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-transactions-title">
@@ -313,7 +319,8 @@ export default function Transactions() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

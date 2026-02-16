@@ -15,7 +15,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table (required for Replit Auth)
+// Session storage table 
 export const sessions = pgTable(
   "sessions",
   {
@@ -26,10 +26,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (required for Replit Auth)
+// User storage table 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(), // hashed password
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -41,10 +42,24 @@ export const users = pgTable("users", {
   postcode: varchar("postcode"),
   country: varchar("country").default('United Kingdom'),
   profileCompleted: boolean("profile_completed").default(false),
-  stripeCustomerId: varchar("stripe_customer_id"),
+  
+  // Banking & Payout Information
+  bankAccountHolderName: varchar("bank_account_holder_name"),
+  bankAccountNumber: varchar("bank_account_number"), // Last 4 digits only for display
+  bankSortCode: varchar("bank_sort_code"),
+  bankName: varchar("bank_name"),
+  stripeAccountId: varchar("stripe_account_id"), // Stripe Connected Account ID for payouts
+  bankDetailsVerified: boolean("bank_details_verified").default(false),
+  bankDetailsCompletedAt: timestamp("bank_details_completed_at"),
+  
+  // Payment Information
+  stripeCustomerId: varchar("stripe_customer_id"), // For making contributions
+  
+  // Trust & Statistics
   trustScore: decimal("trust_score", { precision: 3, scale: 2 }).default('0.00'),
   totalGroupsCompleted: integer("total_groups_completed").default(0),
   onTimePaymentRate: decimal("on_time_payment_rate", { precision: 5, scale: 2 }).default('0.00'),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

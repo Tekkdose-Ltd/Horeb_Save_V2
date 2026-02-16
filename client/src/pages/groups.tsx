@@ -1,52 +1,114 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateGroupModal } from "@/components/CreateGroupModal";
+import { BankDetailsModal } from "@/components/BankDetailsModal";
 import { GroupCard } from "@/components/GroupCard";
 import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useBankDetailsRequired } from "@/hooks/useBankDetailsRequired";
+import { apiRequest, queryClient, getUserGroups, getPublicGroups } from "@/lib/queryClient";
 
 export default function Groups() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
+  const [pendingJoinGroupId, setPendingJoinGroupId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const {
+    showBankDetailsModal,
+    setShowBankDetailsModal,
+    requireBankDetails,
+    handleBankDetailsSuccess,
+  } = useBankDetailsRequired();
 
   const { data: myGroups, isLoading: myGroupsLoading } = useQuery({
-    queryKey: ["/api/groups/my"],
+    queryKey: ["/groups/my"],
+    queryFn: getUserGroups,
     retry: false,
   });
 
   const { data: publicGroups, isLoading: publicGroupsLoading } = useQuery({
-    queryKey: ["/api/groups/public"],
+    queryKey: ["/groups/public"],
+    queryFn: getPublicGroups,
     retry: false,
   });
 
   const joinGroupMutation = useMutation({
     mutationFn: async (groupId: string) => {
-      return await apiRequest("POST", `/api/groups/${groupId}/join`);
+      setJoiningGroupId(groupId);
+      // Find the group to get its invitation code
+      const group = publicGroups?.find((g: any) => g.id === groupId);
+      
+      if (group?.inviteCode || group?.invite_code) {
+        // Use invitation code endpoint if available
+        const inviteCode = group.inviteCode || group.invite_code;
+        console.log("Joining group with invitation code:", inviteCode);
+        return await apiRequest("POST", "/groups/join", { 
+          invitation_code: inviteCode 
+        });
+      } else {
+        // Fallback to direct join by ID (may not be supported by backend)
+        console.warn("No invitation code found for group, trying direct join by ID");
+        return await apiRequest("POST", `/groups/${groupId}/join`);
+      }
     },
     onSuccess: (data, groupId) => {
+      setJoiningGroupId(null);
+      setPendingJoinGroupId(null);
       toast({
         title: "Success",
         description: "You have successfully joined the group!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/groups/my"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/groups/public"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/groups/${groupId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/my-active-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/public"] });
+      queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] });
     },
     onError: (error: any) => {
+      setJoiningGroupId(null);
+      setPendingJoinGroupId(null);
+      
+      // Provide more helpful error message
+      const errorMessage = error.message || "Failed to join group";
+      const helpText = errorMessage.includes("404") 
+        ? "This group joining feature is not yet supported by the backend. Please ask the group creator for an invitation code."
+        : errorMessage;
+        
       toast({
         title: "Error",
-        description: error.message || "Failed to join group",
+        description: helpText,
         variant: "destructive",
       });
     },
   });
+
+  const handleJoinGroup = (groupId: string) => {
+    // Check if bank details are required
+    const canProceed = requireBankDetails(() => {
+      // If bank details exist, proceed with joining
+      joinGroupMutation.mutate(groupId);
+    });
+
+    // If bank details don't exist, store the group ID to join after completion
+    if (!canProceed) {
+      setPendingJoinGroupId(groupId);
+    }
+  };
+
+  const handleBankDetailsComplete = () => {
+    handleBankDetailsSuccess(() => {
+      // After bank details are saved, join the pending group
+      if (pendingJoinGroupId) {
+        joinGroupMutation.mutate(pendingJoinGroupId);
+      }
+    });
+  };
 
   const filteredPublicGroups = Array.isArray(publicGroups) ? publicGroups.filter((group: any) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,10 +116,13 @@ export default function Groups() {
   ) : [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar className="w-64" />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-groups-title">
@@ -187,11 +252,11 @@ export default function Groups() {
                           </div>
                           <Button 
                             size="sm"
-                            onClick={() => joinGroupMutation.mutate(group.id)}
-                            disabled={group.memberCount >= group.maxMembers || joinGroupMutation.isPending}
+                            onClick={() => handleJoinGroup(group.id)}
+                            disabled={group.memberCount >= group.maxMembers || joiningGroupId === group.id}
                             data-testid={`button-join-group-${group.id}`}
                           >
-                            {joinGroupMutation.isPending ? 'Joining...' : group.memberCount >= group.maxMembers ? 'Full' : 'Join Group'}
+                            {joiningGroupId === group.id ? 'Joining...' : group.memberCount >= group.maxMembers ? 'Full' : 'Join Group'}
                           </Button>
                         </div>
                       </div>
@@ -219,12 +284,20 @@ export default function Groups() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
-      </main>
+          </Tabs>
+        </main>
+      </div>
 
       <CreateGroupModal 
         isOpen={showCreateModal} 
         onClose={() => setShowCreateModal(false)} 
+      />
+
+      <BankDetailsModal
+        isOpen={showBankDetailsModal}
+        onClose={() => setShowBankDetailsModal(false)}
+        onSuccess={handleBankDetailsComplete}
+        requirementContext="join_group"
       />
     </div>
   );

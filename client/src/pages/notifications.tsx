@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,34 +21,39 @@ export default function Notifications() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: notifications, isLoading: notificationsLoading } = useQuery({
-    queryKey: ["/api/notifications"],
-    retry: false,
-  });
+  // Commented out notifications API call - no backend endpoint yet
+  // const { data: notifications, isLoading: notificationsLoading } = useQuery({
+  //   queryKey: ["/notifications"],
+  //   retry: false,
+  // });
+  
+  // Mock empty notifications for now
+  const notifications = [];
+  const notificationsLoading = false;
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const response = await apiRequest("POST", `/api/notifications/${notificationId}/read`);
+      const response = await apiRequest("POST", `/notifications/${notificationId}/read`);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/notifications"] });
     },
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/notifications/mark-all-read");
+      const response = await apiRequest("POST", "/notifications/mark-all-read");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/notifications"] });
       toast({
         title: "Success",
         description: "All notifications marked as read",
@@ -84,10 +89,13 @@ export default function Notifications() {
   const readNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => n.isRead) : [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar className="w-64" />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-notifications-title">
@@ -233,7 +241,8 @@ export default function Notifications() {
             </CardContent>
           </Card>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
