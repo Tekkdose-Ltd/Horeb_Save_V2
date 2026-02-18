@@ -165,6 +165,16 @@ const payment = (await PaymentGateWay.getPaymentGateWayInstance()).stripeInstanc
   }
       return
      }
+
+     case "account.updated":{
+      const account = event.data.object;
+  
+      if(account.charges_enabled && account.details_submitted){
+         await newAccountModel.findOneAndUpdate({email:account.email},{stripe_connect_acc_id:account?.id})
+        console.log(`Account  is now fully enabled for charges and transfers.`);
+      }
+      return
+     }
     default:
       console.log(`Unhandled event type ${event.type}`);
   }

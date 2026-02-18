@@ -94,12 +94,22 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
        }
 
 
-      create_stripe_express_account_for_new_member = async (email:any)=>{
+      create_stripe_express_account_for_new_member = async (email:any,country:any)=>{
+
+   
     const account = await this.stripeInstance()?.accounts.create({
       type:'express',
-      capabilities:{
-        transfers:{requested:true}
+      country,
+      business_type: 'individual',
+      business_profile: {
+        // Use a description if the user has no website
+        product_description: 'Individual participating in a rotating savings and credit association (Rosca).',
       },
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      
       email,
       
       
@@ -118,7 +128,8 @@ import { stringifyPrimitive } from 'zod/v4/core/util.cjs'
       account:accountId,
       refresh_url:'http://localhost:3050/api/v1/refresh',
       return_url:'http://localhost:3050/api/v1/completed',
-      type:'account_onboarding'
+      type:'account_onboarding',
+      collect: 'eventually_due', 
      })
 
      return acccountLink

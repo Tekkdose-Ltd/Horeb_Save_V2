@@ -1,3 +1,4 @@
+import { countryCode, countryCurrency } from "../../../util/countryCurrency";
 import SERVER_STATUS from "../../../util/interface/CODE";
 import { ResponseBodyProps } from "../../../util/interface/ResponseBodyProps";
 import TypedRequest from "../../../util/interface/TypedRequest";
@@ -77,7 +78,9 @@ export const  createNewAndLinKAccount = async (req:TypedRequest<any>,res:TypedRe
      }
 
      const payment = await PaymentGateWay.getPaymentGateWayInstance()
-     const account = await  payment.create_stripe_express_account_for_new_member(userData?.email)
+     
+    const country = countryCode[userData?.country!! as keyof typeof countryCode] 
+     const account = await  payment.create_stripe_express_account_for_new_member(userData?.email,country)
 
     
 
@@ -86,7 +89,7 @@ export const  createNewAndLinKAccount = async (req:TypedRequest<any>,res:TypedRe
    console.log(redirectURL)
       if(redirectURL?.url){
 
-        await userData?.updateOne({stripe_connect_acc_id:account?.id})
+       
                res.status(SERVER_STATUS.SUCCESS).json({
                  title:'User Link Payment Account Message',
                  successful:true,
