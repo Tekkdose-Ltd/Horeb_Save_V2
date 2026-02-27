@@ -1,5 +1,7 @@
+import { newAccountModel } from "../auth/account/model/createAccountModel"
 import { ContributionModel } from "../groups/model/contritubitions"
 import { newGroupModel } from "../groups/model/groups"
+import PaymentGateWay from "../payment/paymentSetup"
 import { BackgroundService } from "./backgroundServiceClass"
 import {Agenda} from 'agenda'
 
@@ -41,16 +43,24 @@ export const startContributionSchedule = async (contribution_id:string,group_id:
 export const checkDueContribution  = async (contribution_id:string,group_id:string,jobScheduler:Agenda) =>{
      
     try {
-       console.log('background calling.....')
+       console.log('background calling.....',contribution_id)
+     
         const contribution = await ContributionModel.findOne({_id:contribution_id,group_id:group_id})
 
         const group = await newGroupModel.findOne({_id:group_id,active_contribution_id:contribution_id})
-
-         if(contribution && group && contribution.members_paid.length === group.max_number_of_members){
+         const user = await newAccountModel.findOne({id:contribution?.member_due_for_payment})
+       
+       
+         if(contribution && group && contribution.members_paid.length === group.max_number_of_members && !contribution.member_completed_payment && !contribution.constribution_ended){
              await contribution.updateOne({member_completed_payment:true})
          }
 
-         if(contribution && contribution.member_completed_payment && group && new Date(group.next_payout_date).getTime()=== Date.now()){
+         if(contribution && contribution.member_completed_payment && group && new Date(group.next_payout_date).getTime()=== Date.now() && !contribution.processingPayment){
+         
+
+          (await PaymentGateWay.getPaymentGateWayInstance()).send_money_to_due_user(user?._id.toString()!!,group.contribution_amount,'usd',group._id,contribution.member_due_for_payment,contribution._id)
+
+           await  contribution.updateOne({processingPayment:true})
             // send email to admin to pay out
          }
 
@@ -60,59 +70,6 @@ export const checkDueContribution  = async (contribution_id:string,group_id:stri
 
     const paymentDisbursedForContribution =  paymentApprovalForContributions.find(approval=>approval.group_id.toString()===group_id && approval.current_round=== contribution?.current_round)
 
-
-       if(paymentDisbursedForContribution && group?.active_contribution_id.toString() === contribution_id && group?.current_round === contribution?.current_round ){
-
-          //try to automatically generate next round
-
-          const updateRound = group.current_round+1
-
-   if(group.max_number_of_members < updateRound){
-
-
-   let nextPayoutDate = new Date(group.next_payout_date)
-
-    if(group.frequency === 'weekly'){
-
-        nextPayoutDate.setDate(nextPayoutDate.getDate() + 7)
-    }
-
-       else if(group.frequency === 'bi-weekly'){
-        nextPayoutDate.setDate(nextPayoutDate.getDate() + 14)
-    }
-    else if(group.frequency === 'monthly'){
-        nextPayoutDate.setMonth(nextPayoutDate.getMonth() + 1)
-    }
-
-
-    const nextContribution =  new ContributionModel({
-          group_id:group._id,
-       constribution_started:true,
-        amount:group.contribution_amount,
-        current_round:updateRound,
-        member_due_for_payment:await getDueMemberForPayment(contribution,group)
-            })
-
-
-
-    await  nextContribution.save()
-
-      await  group.updateOne({contribution_started:true,start_date:Date.now(),current_round:updateRound,next_payout_date:nextPayoutDate.toDateString(),active_contribution_id:nextContribution?._id})
-      await contribution.updateOne({constribution_ended:true})
-       await  jobScheduler.cancel({'data.contribution_id':contribution_id})
-
-        startContributionSchedule(nextContribution._id.toString('base64')!!,group_id,nextPayoutDate)
-          
-
-
-          }
-
-        
-
-  
-     
-
-       }
 
 
 

@@ -22,6 +22,8 @@ app.use(cors({origin:'*',allowedHeaders:['Content-Type','Authorization'],
 
 app.use('/webhook/payment/response',express.raw({type: 'application/json'}),hookRouter)
 
+app.use('/webhook/new',express.raw({type: 'application/json'}),hookRouter)
+
 // api docummentation setup
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggersetup));
 

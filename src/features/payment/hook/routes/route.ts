@@ -1,12 +1,14 @@
 
 import express from 'express'
-import { getPaymentHookResponse } from '../controller/webhook'
+import { getPaymentHookResponse, newAccountSetupHook } from '../controller/webhook'
 
 
 const hookRouter =  express.Router()
 
 
 hookRouter.post('',getPaymentHookResponse)
+
+hookRouter.post('/account/response',newAccountSetupHook)
 
 
 
