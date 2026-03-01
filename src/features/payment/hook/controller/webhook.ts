@@ -36,7 +36,7 @@ const payment = (await PaymentGateWay.getPaymentGateWayInstance()).stripeInstanc
       
 
   switch (event.type) {
-   /* case 'payment_intent.succeeded':
+    case 'payment_intent.succeeded':
    
       const paymentIntent = event.data.object;
       console.log(paymentIntent.client_secret)
@@ -165,7 +165,7 @@ const payment = (await PaymentGateWay.getPaymentGateWayInstance()).stripeInstanc
   }
       return
      }
-*/
+
      case "account.updated":{
       const account = event.data.object;
   
