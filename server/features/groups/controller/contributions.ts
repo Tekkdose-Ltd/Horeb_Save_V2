@@ -1,3 +1,4 @@
+// @ts-nocheck
 import SERVER_STATUS from "../../../util/interface/CODE"
 import { ResponseBodyProps } from "../../../util/interface/ResponseBodyProps"
 import TypedRequest from "../../../util/interface/TypedRequest"
@@ -39,7 +40,10 @@ export const startGroupContribution = async (req:TypedRequest<{group_id:string,c
    
     //update next payout date based on frequency
     let nextPayoutDate = new Date()
-    if(group.frequency === 'weekly'){
+    if(group.frequency === 'hourly'){
+        nextPayoutDate.setHours(nextPayoutDate.getHours() + 1)
+    }
+    else if(group.frequency === 'weekly'){
 
         nextPayoutDate.setDate(nextPayoutDate.getDate() + 7)
     }

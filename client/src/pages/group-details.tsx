@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserGroups } from "@/lib/queryClient";
 import { Sidebar } from "@/components/Sidebar";
 import { MemberRatingModal } from "@/components/MemberRatingModal";
-import { ContributeModal } from "@/components/ContributeModal";
 import { BankDetailsModal } from "@/components/BankDetailsModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ export default function GroupDetails() {
   const [, setLocation] = useLocation();
   const groupId = match ? (params as { id: string }).id : null;
   const [selectedMember, setSelectedMember] = useState<any>(null);
-  const [showContributeModal, setShowContributeModal] = useState(false);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
 
   // Handle invite link generation and sharing
@@ -400,40 +398,29 @@ export default function GroupDetails() {
             </Card>
           )}
 
-          {/* Make Contribution - Show if group is active and contributions are activated */}
+          {/* Contribution Auto-Collection */}
           {groupData.status === 'active' && groupData.contributionsActive && (
             <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  Make Your Contribution
+                  Contributions Auto-Collected
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Amount Due</p>
-                    <p className="text-3xl font-bold text-primary">
-                      £{parseFloat(String(groupData.contributionAmount)).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Payment frequency: {groupData.frequency}
-                    </p>
-                  </div>
-                  <Button 
-                    size="lg"
-                    onClick={() => setShowContributeModal(true)}
-                    className="gap-2"
-                    data-testid="button-make-contribution"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    Pay Now
-                  </Button>
+                <div>
+                  <p className="text-sm text-muted-foreground">Amount Due</p>
+                  <p className="text-3xl font-bold text-primary">
+                    £{parseFloat(String(groupData.contributionAmount)).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Payment frequency: {groupData.frequency}
+                  </p>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-900">
-                    🔒 <strong>Secure Payment:</strong> Your card details are processed securely through Stripe. 
-                    We do not store your payment information.
+                    🔒 <strong>Automatic Payments:</strong> Contributions are collected from your linked card.
+                    No manual “Pay Now” action is required.
                   </p>
                 </div>
               </CardContent>
@@ -636,15 +623,6 @@ export default function GroupDetails() {
           rotationNumber: selectedMember.payout_order || selectedMember.payoutOrder || 0,
         } : null}
         groupId={groupId || ''}
-        groupName={groupData?.name || ''}
-      />
-
-      {/* Contribute Modal */}
-      <ContributeModal
-        isOpen={showContributeModal}
-        onClose={() => setShowContributeModal(false)}
-        groupId={groupId || ''}
-        contributionAmount={parseFloat(String(groupData?.contributionAmount || '0'))}
         groupName={groupData?.name || ''}
       />
 

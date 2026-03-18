@@ -101,7 +101,7 @@ export default function PaymentPolicy() {
 
               <h3 className="text-lg font-semibold mb-2 mt-4">Payment Schedule</h3>
               <p className="text-muted-foreground">
-                Contributions are collected according to your group's payment schedule (weekly, bi-weekly, or monthly). 
+                Contributions are collected according to your group's payment schedule (hourly, weekly, bi-weekly, or monthly). 
                 You will receive advance notification before each payment is taken.
               </p>
 

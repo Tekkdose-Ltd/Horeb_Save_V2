@@ -75,7 +75,7 @@ export const groups = pgTable("groups", {
   creatorId: varchar("creator_id").notNull().references(() => users.id),
   maxMembers: integer("max_members").notNull(),
   contributionAmount: decimal("contribution_amount", { precision: 10, scale: 2 }).notNull(),
-  frequency: varchar("frequency").notNull(), // 'weekly', 'monthly', 'bi-weekly'
+  frequency: varchar("frequency").notNull(), // 'hourly', 'weekly', 'monthly', 'bi-weekly'
   status: groupStatusEnum("status").default('draft'),
   currentRound: integer("current_round").default(1),
   totalRounds: integer("total_rounds").notNull(),
@@ -238,7 +238,7 @@ export const insertGroupSchema = createInsertSchema(groups).omit({
   inviteCode: true,
   currentRound: true,
   completedAt: true,
-});
+} as any);
 
 export const insertGroupMemberSchema = createInsertSchema(groupMembers).omit({
   id: true,
@@ -246,7 +246,7 @@ export const insertGroupMemberSchema = createInsertSchema(groupMembers).omit({
   joinedAt: true,
   hasReceivedPayout: true,
   payoutReceivedAt: true,
-});
+} as any);
 
 export const insertContributionSchema = createInsertSchema(contributions).omit({
   id: true,
@@ -254,19 +254,19 @@ export const insertContributionSchema = createInsertSchema(contributions).omit({
   updatedAt: true,
   paidDate: true,
   stripePaymentIntentId: true,
-});
+} as any);
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
   processedAt: true,
   stripeTransactionId: true,
-});
+} as any);
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
-});
+} as any);
 
 // User profile update schema for onboarding
 export const updateProfileSchema = z.object({

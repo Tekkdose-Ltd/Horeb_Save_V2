@@ -8,6 +8,8 @@ import {
   requireAuth,
 } from "./auth";
 import { db } from "./db";
+import { storage } from "./storage";
+import { groupService } from "./services/groupService";
 
 /**
  * API ROUTES
@@ -338,6 +340,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Stripe webhook error:", error);
       res.status(500).json({ 
         message: error.message || "Webhook processing failed" 
+      });
+    }
+  });
+
+  // ==================== GROUP CONTRIBUTION ENDPOINTS ====================
+
+  app.post("/api/groups/activate_contribution", requireAuth, async (req, res) => {
+    if (!db) {
+      return res.status(503).json({
+        message: "Database not configured. Add DATABASE_URL to .env",
+      });
+    }
+
+    try {
+      const schema = z.object({
+        group_id: z.string().min(1, "Group ID is required"),
+      });
+
+      const { group_id } = schema.parse(req.body);
+      const group = await storage.getGroupWithMembers(group_id);
+
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+
+      const userId = req.session?.userId;
+      if (!userId || group.creatorId !== userId) {
+        return res.status(403).json({
+          message: "Only group admins can start the payment rotation",
+        });
+      }
+
+      if (group.status === "active") {
+        return res.status(400).json({
+          message: "This group is already active",
+        });
+      }
+
+      if (group.members.length < group.maxMembers) {
+        return res.status(400).json({
+          message: "All members must join before starting the payment rotation",
+        });
+      }
+
+      const incompleteMembers = group.members.filter(
+        (member) => !member.user.profileCompleted || !member.user.stripeCustomerId
+      );
+
+      if (incompleteMembers.length > 0) {
+        const names = incompleteMembers
+          .map((member) => {
+            const first = member.user.firstName || "";
+            const last = member.user.lastName || "";
+            return `${first} ${last}`.trim() || member.user.email;
+          })
+          .join(", ");
+
+        return res.status(400).json({
+          message: `All members must complete their payment setup before starting rotation. Missing: ${names}`,
+        });
+      }
+
+      const nextPayoutDate = (() => {
+        const now = new Date();
+        const nextDate = new Date(now);
+
+        switch (group.frequency) {
+          case "hourly":
+            nextDate.setHours(now.getHours() + 1);
+            break;
+          case "weekly":
+            nextDate.setDate(now.getDate() + 7);
+            break;
+          case "bi-weekly":
+            nextDate.setDate(now.getDate() + 14);
+            break;
+          case "monthly":
+          default:
+            nextDate.setMonth(now.getMonth() + 1);
+            break;
+        }
+
+        return nextDate;
+      })();
+
+      await storage.updateGroup(group.id, {
+        status: "active",
+        startDate: new Date(),
+        currentRound: 1,
+        nextPayoutDate,
+      });
+
+      await groupService.assignPayoutOrder(group.id);
+      await groupService.createContributionsForRound(group, 1);
+
+      return res.json({
+        message: "Payment rotation started successfully",
+        groupId: group.id,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+
+      console.error("Activate contribution error:", error);
+      return res.status(500).json({
+        message: error.message || "Failed to start payment rotation",
       });
     }
   });

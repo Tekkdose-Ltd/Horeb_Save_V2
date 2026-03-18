@@ -48,13 +48,17 @@ export default function Groups() {
       if (group?.inviteCode || group?.invite_code) {
         // Use invitation code endpoint if available
         const inviteCode = group.inviteCode || group.invite_code;
-        console.log("Joining group with invitation code:", inviteCode);
+        if (import.meta.env.DEV) {
+          console.log("Joining group with invitation code:", inviteCode);
+        }
         return await apiRequest("POST", "/groups/join", { 
           invitation_code: inviteCode 
         });
       } else {
         // Fallback to direct join by ID (may not be supported by backend)
-        console.warn("No invitation code found for group, trying direct join by ID");
+        if (import.meta.env.DEV) {
+          console.warn("No invitation code found for group, trying direct join by ID");
+        }
         return await apiRequest("POST", `/groups/${groupId}/join`);
       }
     },

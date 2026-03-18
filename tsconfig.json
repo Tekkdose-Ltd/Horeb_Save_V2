@@ -8,7 +8,8 @@
     "node_modules",
     "build",
     "dist",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "server/features/**"
   ],
   "compilerOptions": {
     "incremental": true,

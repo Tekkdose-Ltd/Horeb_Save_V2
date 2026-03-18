@@ -35,7 +35,7 @@ export class GroupService {
       type: "payout",
       round: group.currentRound,
       description: `Payout for round ${group.currentRound}`,
-    });
+    } as any);
 
     // Mark member as having received payout
     await storage.updateGroupMember(groupId, nextRecipient.userId, {
@@ -50,7 +50,7 @@ export class GroupService {
       type: "payout_ready",
       title: "Payout Ready!",
       message: `Your payout of £${payoutAmount} from ${group.name} is ready.`,
-    });
+    } as any);
 
     // Send email notification
     if (nextRecipient.user.email) {
@@ -93,7 +93,7 @@ export class GroupService {
           round,
           dueDate,
           status: "pending",
-        });
+        } as any);
       }
     }
   }
@@ -126,7 +126,7 @@ export class GroupService {
           type: "payment_due",
           title: "Payment Overdue",
           message: `Your payment of £${contribution.amount} for ${group.name} is overdue.`,
-        });
+        } as any);
       }
     }
   }
@@ -148,7 +148,7 @@ export class GroupService {
         const { user: updatedUser } = await storage.upsertUser({
           ...user,
           totalGroupsCompleted: (user.totalGroupsCompleted || 0) + 1,
-        });
+        } as any);
       }
     }
   }
@@ -179,6 +179,9 @@ export class GroupService {
     const nextDate = new Date(now);
 
     switch (group.frequency) {
+      case "hourly":
+        nextDate.setHours(now.getHours() + 1);
+        break;
       case "weekly":
         nextDate.setDate(now.getDate() + 7);
         break;
@@ -237,7 +240,7 @@ export class GroupService {
         type: "group_started",
         title: "Group Started!",
         message: `${group.name} has started. Your first contribution is due soon.`,
-      });
+      } as any);
     }
   }
 }

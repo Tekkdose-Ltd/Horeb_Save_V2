@@ -38,7 +38,7 @@ const createGroupSchema = z.object({
   description: z.string().optional(),
   maxMembers: z.number().min(2, "Minimum 2 members").max(20, "Maximum 20 members"),
   contributionAmount: z.number().min(100, "Minimum contribution is £100").max(1000000, "Amount too large"),
-  frequency: z.enum(["weekly", "bi-weekly", "monthly"]),
+  frequency: z.enum(["hourly", "weekly", "bi-weekly", "monthly"]),
   isPublic: z.boolean().default(false),
 });
 
@@ -172,7 +172,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Goal Description (Optional)</FormLabel>
+                  <FormLabel>Goal Description * </FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="What are you saving for?"
@@ -259,6 +259,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="hourly">Hourly</SelectItem>
                       <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>

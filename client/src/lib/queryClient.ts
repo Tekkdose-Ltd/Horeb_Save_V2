@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from "axios";
 
 // Get API base URL from environment or default to relative URLs
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const isDev = import.meta.env.DEV;
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
@@ -35,9 +36,19 @@ axiosInstance.interceptors.request.use(
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Request with token:', config.method?.toUpperCase(), config.url, '| Token:', token.substring(0, 20) + '...');
+      if (isDev) {
+        console.log(
+          '🔑 Request with token:',
+          config.method?.toUpperCase(),
+          config.url,
+          '| Token:',
+          token.substring(0, 20) + '...'
+        );
+      }
     } else {
-      console.warn('⚠️ No auth token found for request:', config.method?.toUpperCase(), config.url);
+      if (isDev) {
+        console.warn('⚠️ No auth token found for request:', config.method?.toUpperCase(), config.url);
+      }
     }
     
     return config;
@@ -68,6 +79,18 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response) {
+      const requestUrl = originalRequest?.url || "";
+      const responseMessage = error.response.data?.message || error.response.data?.error;
+      const isActivateContributionRequest = requestUrl.includes("/groups/activate_contribution");
+
+      if (isActivateContributionRequest && (error.response.status === 401 || error.response.status === 403)) {
+        const customError: any = new Error(responseMessage || "Unable to start payment rotation");
+        customError.status = error.response.status;
+        customError.statusText = error.response.statusText;
+        customError.data = error.response.data;
+        throw customError;
+      }
+
       // Check for authentication errors (401)
       if (error.response.status === 401 && !originalRequest._retry) {
         // Try to refresh token once before logging out
@@ -93,7 +116,9 @@ axiosInstance.interceptors.response.use(
 
         if (token && userData) {
           try {
-            console.log('� Attempting to refresh expired token...');
+            if (isDev) {
+              console.log('🔄 Attempting to refresh expired token...');
+            }
             const parsedUserData = JSON.parse(userData);
             const userId = parsedUserData._id || parsedUserData.id || parsedUserData.user_id;
 
@@ -109,7 +134,9 @@ axiosInstance.interceptors.response.use(
               if (newToken) {
                 // Update stored token
                 localStorage.setItem('auth_token', newToken);
-                console.log('✅ Token refreshed successfully, retrying original request');
+                if (isDev) {
+                  console.log('✅ Token refreshed successfully, retrying original request');
+                }
 
                 // Update auth header for original request
                 originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
@@ -132,7 +159,9 @@ axiosInstance.interceptors.response.use(
         }
 
         // If refresh failed or no token, proceed with logout
-        console.warn('🔒 Authentication error - Logging out user');
+        if (isDev) {
+          console.warn('🔒 Authentication error - Logging out user');
+        }
         const errorMessage = error.response.data?.message || 'Your session has expired. Please login again.';
         
         // Clear auth data
@@ -158,7 +187,9 @@ axiosInstance.interceptors.response.use(
         isRefreshing = false;
       } else if (error.response.status === 403) {
         // 403 Forbidden - don't try to refresh, just logout
-        console.warn('🔒 Access forbidden - Logging out user');
+        if (isDev) {
+          console.warn('🔒 Access forbidden - Logging out user');
+        }
         const errorMessage = error.response.data?.message || 'Access denied. Please login again.';
         
         // Clear auth data
@@ -183,7 +214,7 @@ axiosInstance.interceptors.response.use(
       }
       
       // Server responded with error status
-      const message = error.response.data?.message || error.response.data?.error || error.response.statusText || error.message;
+  const message = responseMessage || error.response.statusText || error.message;
       const customError: any = new Error(message);
       customError.status = error.response.status;
       customError.statusText = error.response.statusText;
@@ -349,7 +380,7 @@ export const createGroup = async (data: {
   name: string;
   description?: string;
   contribution_amount: number;
-  frequency: 'weekly' | 'bi-weekly' | 'monthly';
+  frequency: 'hourly' | 'weekly' | 'bi-weekly' | 'monthly';
   max_members: number;
   is_public?: boolean;
   [key: string]: any;
@@ -360,22 +391,19 @@ export const createGroup = async (data: {
 
 // Get all public groups
 export const getPublicGroups = async () => {
-  console.log('📍 Fetching public groups from:', axiosInstance.defaults.baseURL + '/groups/public');
   try {
     const response = await axiosInstance.get('/groups/public');
-    console.log('✅ Public groups raw response:', response);
-    console.log('✅ Public groups data:', response.data);
     
     // Handle different response structures
     let groups = [];
     if (response.data?.data && Array.isArray(response.data.data)) {
-      console.log('✅ Extracted data array:', response.data.data);
       groups = response.data.data;
     } else if (Array.isArray(response.data)) {
-      console.log('✅ Direct array:', response.data);
       groups = response.data;
     } else {
-      console.warn('⚠️ Unexpected response structure, returning empty array');
+      if (isDev) {
+        console.warn('⚠️ Unexpected response structure, returning empty array');
+      }
       return [];
     }
     
@@ -408,22 +436,19 @@ export const joinGroup = async (data: {
 
 // Get user's groups
 export const getUserGroups = async () => {
-  console.log('📍 Fetching user groups from:', axiosInstance.defaults.baseURL + '/groups/my');
   try {
     const response = await axiosInstance.get('/groups/my');
-    console.log('✅ User groups raw response:', response);
-    console.log('✅ User groups data:', response.data);
     
     // Handle different response structures
     let groups = [];
     if (response.data?.data && Array.isArray(response.data.data)) {
-      console.log('✅ Extracted data array:', response.data.data);
       groups = response.data.data;
     } else if (Array.isArray(response.data)) {
-      console.log('✅ Direct array:', response.data);
       groups = response.data;
     } else {
-      console.warn('⚠️ Unexpected response structure, returning empty array');
+      if (isDev) {
+        console.warn('⚠️ Unexpected response structure, returning empty array');
+      }
       return [];
     }
     

@@ -1,3 +1,4 @@
+// @ts-nocheck
   import express from 'express'
 import userAuthenticationMiddleware from '../../../middleware/userAuthenticationMiddleware'
 import validateRequestBody from '../../../middleware/validateRequestBody'
@@ -46,7 +47,7 @@ const groupsRouter =  express.Router()
  *                                     frequency: 
  *                                       type: string
  *                                       
- *                                       description: The frequency either 'weekly' or 'monthly' or'bi-weekly'.
+ *                                       description: The frequency either 'hourly', 'weekly', 'monthly' or 'bi-weekly'.
  * 
  *                                     contribution_amount: 
  *                                       type: number

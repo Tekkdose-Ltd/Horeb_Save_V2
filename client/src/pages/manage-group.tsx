@@ -227,6 +227,31 @@ export default function ManageGroup() {
     },
   });
 
+  const startRotationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/groups/activate_contribution`, {
+        group_id: groupId as string,
+        creator_of_group_id: (user as any)?._id || user?.id,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/groups/${groupId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/groups/my"] });
+      toast({
+        title: "Payment rotation started",
+        description: "The payout rotation has begun and contributions are now enabled.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start payment rotation",
+        variant: "destructive",
+      });
+    },
+  });
+
   const warnMemberMutation = useMutation({
     mutationFn: async ({ memberId, message }: { memberId: string; message: string }) => {
       const response = await apiRequest("POST", `/groups/${groupId}/members/${memberId}/warn`, {
@@ -324,6 +349,8 @@ export default function ManageGroup() {
   };
 
   const canActivate = displayGroup.memberCount >= 2;
+  const maxMembers = displayGroup.maxMembers || displayGroup.memberCount || 0;
+  const allMembersJoined = maxMembers > 0 && displayGroup.memberCount >= maxMembers;
 
   return (
     <div className="min-h-screen bg-background">
@@ -666,6 +693,37 @@ export default function ManageGroup() {
               )}
             </CardContent>
           </Card>
+
+          {allMembersJoined && !displayGroup.contributionsActive && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Start Payment Rotation</CardTitle>
+                <CardDescription>
+                  All members have joined. Start the payout rotation and enable contributions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm">
+                    <strong>Members joined:</strong> {displayGroup.memberCount} of {maxMembers}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This will begin the contribution cycle and set the first payout schedule.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => startRotationMutation.mutate()}
+                  disabled={startRotationMutation.isPending}
+                  className="w-full"
+                  size="lg"
+                  data-testid="button-start-rotation"
+                >
+                  <PoundSterling className="w-5 h-5 mr-2" />
+                  {startRotationMutation.isPending ? "Starting..." : "Start Payment Rotation"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Activate Group - Visible for draft and completed groups */}
           {(displayGroup.status === 'draft' || displayGroup.status === 'completed') && (
