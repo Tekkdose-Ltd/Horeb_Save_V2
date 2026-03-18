@@ -1,12 +1,12 @@
 import express from 'express'
-import { errorHandler } from './src/middleware/errorHandlerMiddleware';
-import mainAppRouter from './src/routes';
-import { connectDB } from './src/config/database/databaseConfig';
+import { errorHandler } from './src/middleware/errorHandlerMiddleware.ts';
+import mainAppRouter from './src/routes.ts';
+import { connectDB } from './src/config/database/databaseConfig.ts';
 import swaggerUI from "swagger-ui-express";
-import swaggersetup from "./src/config/api-docummentation/swaggersetup";
+import swaggersetup from "./src/config/api-docummentation/swaggersetup.ts";
 import cors from "cors";
 import dotenv from "dotenv";
-import { groupInvite } from './src/features/groups/route/groups';
+import { groupInvite } from './src/features/groups/route/groups.ts';
 dotenv.config();
 
 
