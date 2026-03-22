@@ -114,9 +114,9 @@ export default function Onboarding() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegistrationData) => {
-      // Convert date to ISO string format
-      const date = new Date(data.dateOfBirth);
-      const isoDateString = date.toISOString();
+      // Convert date to full ISO 8601 string with timezone (required by backend z.iso.datetime())
+      // Append T00:00:00.000Z directly to avoid browser timezone shifting the date
+      const isoDateString = `${data.dateOfBirth}T00:00:00.000Z`;
       
       // Upload profile image first if provided
       let profileImageUrl = "";
