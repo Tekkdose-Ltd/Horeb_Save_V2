@@ -165,7 +165,7 @@ export default function Profile() {
       <Sidebar className="w-64" />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-profile-title">

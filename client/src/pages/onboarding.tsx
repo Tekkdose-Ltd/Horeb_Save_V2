@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, User, MapPin, Calendar, Mail, CheckCircle2, Inbox, Eye, EyeOff, Upload, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { HorebSaveLogo } from "@/components/HorebSaveLogo";
 
 // Full registration schema (email, password + profile details)
@@ -27,6 +28,9 @@ const registrationSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number"),
   confirmPassword: z.string(),
   suretyEmail: z.string().email("Invalid guarantor email address"),
+  dataConsent: z.boolean().refine((val) => val === true, {
+    message: "You must consent to data processing to register",
+  }),
 }).merge(updateProfileSchema).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -109,14 +113,14 @@ export default function Onboarding() {
       city: "",
       postcode: "",
       country: "United Kingdom",
+      dataConsent: false,
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegistrationData) => {
-      // Convert date to full ISO 8601 string with timezone (required by backend z.iso.datetime())
-      // Append T00:00:00.000Z directly to avoid browser timezone shifting the date
-      const isoDateString = `${data.dateOfBirth}T00:00:00.000Z`;
+      // Backend middleware uses z.iso.datetime() which requires full ISO 8601 with time + Z suffix
+      const dateOfBirth = `${data.dateOfBirth}T00:00:00.000Z`;
       
       // Upload profile image first if provided
       let profileImageUrl = "";
@@ -139,32 +143,53 @@ export default function Onboarding() {
           // Continue with registration even if image upload fails
         }
       }
+
+      // profile_completed is true if all required fields are filled
+      // profile_image_url is optional so its absence doesn't affect completion
+      const profileCompleted = !!(
+        data.firstName &&
+        data.lastName &&
+        data.phoneNumber &&
+        data.dateOfBirth &&
+        data.addressLine1 &&
+        data.city &&
+        data.postcode &&
+        data.country
+      );
       
-      // Backend expects snake_case
+      // Backend expects snake_case field names
+      // Normalise phone: strip all spaces/dashes, convert 07xxx → +447xxx, 7xxx → +447xxx
+      const rawPhone = data.phoneNumber.replace(/[\s\-().]/g, "");
+      const normalisedPhone = rawPhone.startsWith("+")
+        ? rawPhone
+        : rawPhone.startsWith("07")
+        ? "+44" + rawPhone.slice(1)
+        : rawPhone.startsWith("7")
+        ? "+44" + rawPhone
+        : rawPhone;
+
       const backendData = {
         email: data.email,
         surety_email: data.suretyEmail,
         password: data.password,
         first_name: data.firstName,
         last_name: data.lastName,
-        phone_number: data.phoneNumber,
-        date_of_birth: isoDateString,
+        phone_number: normalisedPhone,
+        date_of_birth: dateOfBirth,
         address_line_1: data.addressLine1,
         address_line_2: data.addressLine2 || "",
         city: data.city,
         postalCode: data.postcode,
         country: data.country,
         profile_image_url: profileImageUrl,
+        profile_completed: profileCompleted,
       };
-      
-      console.log('Sending to backend:', backendData);
       
       try {
         const response = await apiRequest("POST", "/auth/register", backendData);
         const result = await response.json();
         return result;
       } catch (error: any) {
-        console.error('Backend error response:', error);
         throw error;
       }
     },
@@ -577,11 +602,20 @@ export default function Onboarding() {
                           <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="+44 7XXX XXXXXX" 
-                              {...field} 
+                              placeholder="+44 7911 123456 or 07911 123456"
+                              {...field}
+                              onChange={(e) => {
+                                // Strip spaces, dashes, and brackets as the user types
+                                // so the stored value is always compact e.g. +447911123456
+                                const cleaned = e.target.value.replace(/[\s\-().]/g, "");
+                                field.onChange(cleaned);
+                              }}
                               data-testid="input-phone"
                             />
                           </FormControl>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            UK numbers: 07xxx or +447xxx (no spaces needed)
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -731,6 +765,36 @@ export default function Onboarding() {
                     </div>
                   </div>
                 </div>
+
+                {/* Data Consent */}
+                <FormField
+                  control={form.control}
+                  name="dataConsent"
+                  render={({ field }) => (
+                    <FormItem className="border border-border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-start gap-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            id="data-consent"
+                            className="mt-0.5"
+                          />
+                        </FormControl>
+                        <div className="flex-1">
+                          <FormLabel htmlFor="data-consent" className="text-sm font-medium leading-relaxed cursor-pointer">
+                            I consent to Horeb Save collecting and processing my personal data for the purposes of identity verification, fraud prevention, and facilitating group savings. I understand that my data will be handled in accordance with the{" "}
+                            <a href="/privacy" className="text-primary hover:underline font-semibold">
+                              Privacy Policy
+                            </a>
+                            {" "}and will not be shared with third parties without my permission. *
+                          </FormLabel>
+                          <FormMessage className="mt-1" />
+                        </div>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                 {/* Submit Button */}
                 <Button

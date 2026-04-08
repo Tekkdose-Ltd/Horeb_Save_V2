@@ -125,19 +125,20 @@ export default function Groups() {
       <Sidebar className="w-64" />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-groups-title">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2" data-testid="text-groups-title">
               Groups
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Manage your savings groups and discover new opportunities.
             </p>
           </div>
           <Button 
             onClick={() => setShowCreateModal(true)}
+            className="w-full sm:w-auto"
             data-testid="button-create-group"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -250,7 +251,7 @@ export default function Groups() {
                           </p>
                         )}
                         
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-3">
                           <div className="text-sm text-muted-foreground">
                             {group.maxMembers - group.memberCount} spots left
                           </div>
@@ -258,6 +259,7 @@ export default function Groups() {
                             size="sm"
                             onClick={() => handleJoinGroup(group.id)}
                             disabled={group.memberCount >= group.maxMembers || joiningGroupId === group.id}
+                            className="w-full sm:w-auto"
                             data-testid={`button-join-group-${group.id}`}
                           >
                             {joiningGroupId === group.id ? 'Joining...' : group.memberCount >= group.maxMembers ? 'Full' : 'Join Group'}
