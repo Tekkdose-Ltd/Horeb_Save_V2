@@ -117,7 +117,7 @@ export default function JoinGroup() {
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar className="w-64" />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-w-0 pt-14 lg:pt-0">
           <Header />
           <main className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-center h-64">
@@ -132,7 +132,7 @@ export default function JoinGroup() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar className="w-64" />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-md mx-auto">

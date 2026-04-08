@@ -88,25 +88,25 @@ export default function Transactions() {
       <Sidebar className="w-64" />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-transactions-title">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2" data-testid="text-transactions-title">
               Transactions
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               View your complete transaction history and contribution records.
             </p>
           </div>
-          <Button variant="outline" data-testid="button-download-report">
+          <Button variant="outline" className="w-full sm:w-auto" data-testid="button-download-report">
             <Download className="w-4 h-4 mr-2" />
             Download Report
           </Button>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="border-border" data-testid="card-total-contributed">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

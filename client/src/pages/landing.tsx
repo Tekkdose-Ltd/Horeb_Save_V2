@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { HorebSaveLogo } from "@/components/HorebSaveLogo";
 import { HeroSavingsImage } from "@/components/HeroSavingsImage";
-import { WaitlistModal } from "@/components/WaitlistModal";
 import { useEffect, useState } from "react";
 
 function HowItWorksCarousel() {
@@ -50,29 +49,29 @@ function HowItWorksCarousel() {
     >
       <CarouselContent>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
-              src="/images/createGroupImage.jpg"
+              src="/images/HowItWorks_Img.png"
               alt="How Horeb Save Works"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
-              src="/images/contributeImage.jpg"
+              src="/images/moneyJar.png"
               alt="Money Jar - Save Together"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
         <CarouselItem>
-          <div className="p-1">
+          <div className="p-1 h-[500px] flex items-center justify-center">
             <img
-              src="/images/payoutImage.jpg"
+              src="/images/trustedSecure.png"
               alt="Trusted and Secure Platform"
-              className="w-full h-auto object-contain rounded-lg shadow-lg"
+              className="w-full h-full object-contain rounded-lg shadow-lg"
             />
           </div>
         </CarouselItem>
@@ -84,8 +83,6 @@ function HowItWorksCarousel() {
 }
 
 export default function Landing() {
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
-
   return (
     <div>
       {/* Hero Section with Header */}
@@ -127,15 +124,20 @@ export default function Landing() {
                 </a>
               </div>
 
-
+              {/* Get Started Button */}
               <Button
-                data-testid="button-get-started"
+                asChild
+                data-testid="button-login"
                 className="bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
                 size="sm"
-                onClick={() => window.location.href = '/login'}
               >
-                <span>Get Started</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                <a
+                  href="/register"
+                  className="flex items-center space-x-1 sm:space-x-2"
+                >
+                  <span>Get Started</span>
+                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                </a>
               </Button>
             </div>
           </div>
@@ -162,11 +164,11 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Button
                   size="lg"
-                  onClick={() => setWaitlistOpen(true)}
+                  asChild
                   className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
-                  data-testid="button-get-started-hero"
+                  data-testid="button-start-saving"
                 >
-                  <a href="/login">Get Started</a>
+                  <a href="/register">Start Saving Today</a>
                 </Button>
                 <Button
                   variant="outline"
@@ -190,7 +192,7 @@ export default function Landing() {
                 <div className="flex items-center space-x-2">
                   <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
                   <span className="text-xs sm:text-sm text-gray-600">
-                    4,000+ Members
+                    10,000+ Members
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -316,7 +318,7 @@ export default function Landing() {
                 <CardContent className="p-0 h-full relative">
                   {/* Background image */}
                   <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat "
                     style={{
                       backgroundImage: "url('/images/transparent.png')",
                       backgroundSize: "cover",
@@ -451,17 +453,17 @@ export default function Landing() {
                 {/* Right side - Button */}
                 <div className="flex justify-center lg:justify-end">
                   <Button
+                    size="lg"
                     asChild
-                    data-testid="button-login"
-                    className="bg-zinc-50 text-black hover:bg-primary hover:text-white transition-colors text-sm sm:text-base px-3 sm:px-4 py-2"
-                    size="sm"
+                    className="bg-white text-black hover:bg-gray-100 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center space-x-2 shadow-lg w-full sm:w-auto max-w-xs"
+                    data-testid="button-join-now"
                   >
                     <a
                       href="/register"
-                      className="flex items-center space-x-1 sm:space-x-2"
+                      className="flex items-center space-x-2"
                     >
-                      <span>Get Started</span>
-                      <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>Join Now - It's Free</span>
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   </Button>
                 </div>
@@ -542,26 +544,6 @@ export default function Landing() {
               </ul>
             </div>
 
-            {/* Support */}
-            <div className="space-y-4 text-center sm:text-left">
-              <h3 className="text-white font-semibold text-base sm:text-lg">
-                Support
-              </h3>
-              <ul className="space-y-2 sm:space-y-3">
-                <li>
-                  <a
-                    href="https://tally.so/r/mZpLoy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-white transition-colors text-sm"
-                    data-testid="link-product-support"
-                  >
-                    Product Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-
             {/* Social Links */}
             <div className="space-y-4 text-center sm:text-left">
               <h3 className="text-white font-semibold text-base sm:text-lg">
@@ -636,33 +618,27 @@ export default function Landing() {
           <div className="border-t border-gray-600 mt-8 sm:mt-12 pt-6 sm:pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
               <p className="text-gray-400 text-sm mb-4 sm:mb-0">
-                © 2026 Horeb Save. All rights reserved. Building financial
+                © 2024 Horeb Save. All rights reserved. Building financial
                 communities together.
               </p>
               <div className="flex space-x-4 sm:space-x-6">
                 <a
-                  href="/privacy"
+                  href="/privacy-policy"
                   className="text-gray-400 hover:text-white text-sm transition-colors"
                 >
-                  Privacy Policy
+                  Privacy
                 </a>
                 <a
-                  href="/terms"
+                  href="/terms-of-service"
                   className="text-gray-400 hover:text-white text-sm transition-colors"
                 >
-                  Terms of Service
+                  Terms
                 </a>
               </div>
             </div>
           </div>
         </div>
       </footer>
-
-      {/* Waitlist Modal */}
-      <WaitlistModal
-        isOpen={waitlistOpen}
-        onClose={() => setWaitlistOpen(false)}
-      />
     </div>
   );
 }

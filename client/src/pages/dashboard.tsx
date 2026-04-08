@@ -121,15 +121,15 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-zinc-100">
-      {/* Sidebar */}
+      {/* Sidebar (handles its own mobile/desktop rendering) */}
       <Sidebar className="w-64" />
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content — offset on mobile for the fixed top bar */}
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
           {/* Dashboard Hero */}
-          <div className="mb-8">
-            <div className="relative bg-primary rounded-xl p-12 text-white mb-6 overflow-hidden">
+          <div className="mb-6 sm:mb-8">
+            <div className="relative bg-primary rounded-xl p-6 sm:p-8 lg:p-12 text-white mb-6 overflow-hidden">
 
               {/* Top-left SVG */}
               <div className="absolute top-0 left-0 z-0">
@@ -150,7 +150,7 @@ export default function Dashboard() {
                 </svg>
               </div>
 
-              <div className="hidden md:block absolute bottom-12 -right-[32rem]  h-full w-full scale-y-112">
+              <div className="hidden md:block absolute bottom-12 -right-[32rem] h-full w-full scale-y-112">
                 <img
                   src="/images/442dfe608d3d6b6c6453f02262602dcfdbe48cf1.png"
                   alt="Banner illustration"
@@ -158,18 +158,16 @@ export default function Dashboard() {
                 />
               </div>
 
-
-
               {/* Left content */}
-              <div className="relative z-10 max-w-[55%]">
+              <div className="relative z-10 max-w-full md:max-w-[55%]">
                 <h2
-                  className="text-3xl font-bold mb-2"
+                  className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2"
                   data-testid="text-welcome"
                 >
                   Welcome back, {userName}!
                 </h2>
 
-                <p className="text-white/90 text-lg mb-6">
+                <p className="text-white/90 text-sm sm:text-base lg:text-lg mb-4 sm:mb-6">
                   You have{' '}
                   {typeof stats === 'object' && stats !== null && 'activeGroups' in stats
                     ? (stats as any).activeGroups
@@ -181,10 +179,9 @@ export default function Dashboard() {
                   in contributions this month.
                 </p>
 
-                {/* Create Group button BELOW welcome text */}
                 <Button
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-white text-primary px-6 py-2 rounded-sm font-semibold hover:bg-white/90 transition-colors"
+                  className="bg-white text-primary px-4 sm:px-6 py-2 rounded-sm font-semibold hover:bg-white/90 transition-colors text-sm sm:text-base"
                   data-testid="button-create-group"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -193,24 +190,17 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Quick Stats stay unchanged */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* cards */}
-            </div>
-
-
-
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card className="border-border" data-testid="card-active-groups">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Users className="text-primary text-xl" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm text-muted-foreground">Active Groups</p>
-                      <p className="text-2xl font-bold" data-testid="text-active-groups-count">
+                    <div className="ml-3 sm:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Active Groups</p>
+                      <p className="text-xl sm:text-2xl font-bold" data-testid="text-active-groups-count">
                         {groupsLoading ? '...' : (Array.isArray(groups) ? groups.length : 0)}
                       </p>
                     </div>
@@ -219,14 +209,14 @@ export default function Dashboard() {
               </Card>
 
               <Card className="border-border" data-testid="card-total-saved">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                      <PoundSterling className="text-secondary text-xl" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <PoundSterling className="text-secondary w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm text-muted-foreground">Total Saved</p>
-                      <p className="text-2xl font-bold" data-testid="text-total-saved">
+                    <div className="ml-3 sm:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Total Saved</p>
+                      <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-saved">
                         £{statsLoading ? '...' : (typeof stats === 'object' && stats !== null && 'totalSaved' in stats ? (stats as any).totalSaved : 0)}
                       </p>
                     </div>
@@ -235,28 +225,28 @@ export default function Dashboard() {
               </Card>
 
               <Card className="border-border" data-testid="card-next-payout">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                      <Clock className="text-accent text-xl" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Clock className="text-accent w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm text-muted-foreground">Next Payout</p>
-                      <p className="text-lg font-bold">TBD</p>
+                    <div className="ml-3 sm:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Next Payout</p>
+                      <p className="text-base sm:text-lg font-bold">TBD</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="border-border" data-testid="card-trust-score">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Star className="text-primary text-xl" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Star className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm text-muted-foreground">Trust Score</p>
-                      <p className="text-2xl font-bold text-secondary" data-testid="text-trust-score">
+                    <div className="ml-3 sm:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Trust Score</p>
+                      <p className="text-xl sm:text-2xl font-bold text-secondary" data-testid="text-trust-score">
                         {statsLoading ? '...' : (typeof stats === 'object' && stats !== null && 'trustScore' in stats ? ((stats as any).trustScore || 0).toFixed(1) : '0.0')}
                       </p>
                     </div>
@@ -266,13 +256,13 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Active Groups */}
             <div className="lg:col-span-2">
               <Card className="border-border" data-testid="card-active-groups-list">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold">Active Groups</h3>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex justify-between items-center mb-4 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold">Active Groups</h3>
                     <Button variant="ghost" className="text-primary hover:text-primary/80 font-medium text-sm">
                       View All
                     </Button>
@@ -309,21 +299,19 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Payout Rotation Section - Below Active Groups */}
-              <div className="mt-6">
+              {/* Payout Rotation Section */}
+              <div className="mt-4 sm:mt-6">
                 <PayoutRotation />
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Admin Approval Widget - Shows only for group admins with pending approvals */}
+            {/* Right sidebar widgets */}
+            <div className="space-y-4 sm:space-y-6">
               <AdminApprovalWidget />
 
-              {/* Payment Reminder */}
               {unreadNotifications > 0 && (
                 <Card className="bg-accent/5 border-accent/20" data-testid="card-payment-reminder">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-start space-x-3">
                       <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Bell className="text-accent" />
@@ -347,16 +335,11 @@ export default function Dashboard() {
                 </Card>
               )}
 
-              {/* Recent Activity */}
               <ActivityFeed transactions={Array.isArray(transactions) ? transactions : undefined} />
-
-              {/* Trust Score */}
               <TrustScore
                 stats={typeof stats === 'object' && stats !== null && 'trustScore' in stats ? (stats as any) : undefined}
                 user={user || undefined}
               />
-
-              {/* Recent Ratings */}
               <RecentRatings
                 ratings={Array.isArray(userRatings) ? userRatings : undefined}
                 isLoading={ratingsLoading}
@@ -365,25 +348,24 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Browse Groups */}
             <Card className="border-border" data-testid="card-browse-groups">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Discover New Groups</h3>
-
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">Discover New Groups</h3>
                 <div className="space-y-3">
                   {Array.isArray(publicGroups) && publicGroups.length > 0 ? (
                     publicGroups.slice(0, 2).map((group: any) => (
-                      <div key={group.id} className="border border-border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer">
+                      <div key={group.id} className="border border-border rounded-lg p-3 sm:p-4 hover:shadow-sm transition-shadow cursor-pointer">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium">{group.name}</h4>
+                          <h4 className="font-medium text-sm sm:text-base">{group.name}</h4>
                           <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs">Open</span>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                           {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency}
                         </p>
                         <div className="flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-xs sm:text-sm text-muted-foreground">
                             {group.maxMembers - group.memberCount} spots left
                           </div>
                           <Button
@@ -418,34 +400,30 @@ export default function Dashboard() {
 
             {/* Transaction History */}
             <Card className="border-border" data-testid="card-transaction-history">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Recent Transactions</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">Recent Transactions</h3>
                   <Button variant="ghost" className="text-primary hover:text-primary/80 font-medium text-sm">
                     View All
                   </Button>
                 </div>
-
                 <div className="space-y-3">
                   {Array.isArray(transactions) && transactions.length > 0 ? (
                     transactions.slice(0, 3).map((transaction: any) => (
                       <div key={transaction.id} className="flex justify-between items-center py-2">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${transaction.type === 'contribution' ? 'bg-destructive/10' : 'bg-secondary/10'
-                            }`}>
-                            <PoundSterling className={`text-xs ${transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
-                              }`} />
+                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${transaction.type === 'contribution' ? 'bg-destructive/10' : 'bg-secondary/10'}`}>
+                            <PoundSterling className={`text-xs ${transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'}`} />
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm font-medium truncate">
                               {transaction.type === 'contribution' ? 'Contribution sent' : 'Payout received'}
                             </p>
-                            <p className="text-xs text-muted-foreground">{transaction.description}</p>
+                            <p className="text-xs text-muted-foreground truncate">{transaction.description}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-medium ${transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'
-                            }`}>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <p className={`text-xs sm:text-sm font-medium ${transaction.type === 'contribution' ? 'text-destructive' : 'text-secondary'}`}>
                             {transaction.type === 'contribution' ? '-' : '+'}£{transaction.amount}
                           </p>
                           <p className="text-xs text-muted-foreground">

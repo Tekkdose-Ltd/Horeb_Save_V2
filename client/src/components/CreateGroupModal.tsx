@@ -139,7 +139,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md w-full" data-testid="modal-create-group">
+      <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto" data-testid="modal-create-group">
         <DialogHeader>
           <DialogTitle data-testid="title-create-group">Create New Group</DialogTitle>
           <DialogDescription>

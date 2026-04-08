@@ -94,14 +94,14 @@ export default function Notifications() {
       <Sidebar className="w-64" />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-notifications-title">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2" data-testid="text-notifications-title">
               Notifications
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Stay updated with your groups and transactions.
             </p>
           </div>
@@ -109,6 +109,7 @@ export default function Notifications() {
             <Button 
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
+              className="w-full sm:w-auto"
               data-testid="button-mark-all-read"
             >
               Mark All as Read

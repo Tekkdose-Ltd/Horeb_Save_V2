@@ -60,16 +60,18 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
       className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
       data-testid={`card-group-${group.id}`}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h4 className="font-semibold text-lg" data-testid={`text-group-name-${group.id}`}>
+      <div className="flex justify-between items-start gap-2 mb-3">
+        <div className="min-w-0">
+          <h4 className="font-semibold text-base sm:text-lg truncate" data-testid={`text-group-name-${group.id}`}>
             {group.name}
           </h4>
           <p className="text-sm text-muted-foreground">
-            {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency} • Started {group.status === 'active' ? 'Active' : 'Draft'}
+            {group.memberCount}/{group.maxMembers} members • £{group.contributionAmount}/{group.frequency} • {group.status === 'active' ? 'Active' : 'Draft'}
           </p>
         </div>
-        {getStatusBadge(group.status)}
+        <div className="flex-shrink-0">
+          {getStatusBadge(group.status)}
+        </div>
       </div>
       
       {group.description && (
@@ -90,7 +92,7 @@ export function GroupCard({ group, showActions = false }: GroupCardProps) {
         </div>
       )}
       
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center space-x-4 text-sm">
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4 text-muted-foreground" />

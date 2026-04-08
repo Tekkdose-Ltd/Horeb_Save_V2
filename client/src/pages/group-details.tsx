@@ -144,7 +144,7 @@ export default function GroupDetails() {
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar className="w-64" />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-w-0 pt-14 lg:pt-0">
           <main className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -159,7 +159,7 @@ export default function GroupDetails() {
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar className="w-64" />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-w-0 pt-14 lg:pt-0">
           <main className="container mx-auto px-4 py-8">
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">
@@ -225,8 +225,8 @@ export default function GroupDetails() {
       <Sidebar className="w-64" />
       
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <main className="container mx-auto px-4 py-8">
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
+        <main className="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="mb-6">
           <Button 
             variant="ghost" 
@@ -241,10 +241,10 @@ export default function GroupDetails() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <CardTitle className="text-3xl" data-testid="text-group-name">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                    <CardTitle className="text-2xl sm:text-3xl" data-testid="text-group-name">
                       {groupData.name}
                     </CardTitle>
                     {getStatusBadge(groupData.status)}
@@ -255,7 +255,7 @@ export default function GroupDetails() {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:ml-4 sm:flex-nowrap">
                   {isAdmin && (
                     <>
                       <Button 
@@ -263,6 +263,7 @@ export default function GroupDetails() {
                         size="sm"
                         onClick={handleShareInvite}
                         data-testid="button-share-invite"
+                        className="flex-1 sm:flex-none"
                       >
                         <Share2 className="w-4 h-4 mr-2" />
                         Invite
@@ -272,6 +273,7 @@ export default function GroupDetails() {
                         size="sm"
                         onClick={() => setLocation(`/groups/${groupId}/manage`)}
                         data-testid="button-manage-group"
+                        className="flex-1 sm:flex-none"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Manage Group
@@ -283,15 +285,16 @@ export default function GroupDetails() {
                     size="sm"
                     onClick={() => setShowPaymentLinkModal(true)}
                     data-testid="button-link-payment"
+                    className="flex-1 sm:flex-none"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Link Payment Method
+                    Link Payment
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Users className="w-6 h-6 text-primary" />
@@ -347,9 +350,9 @@ export default function GroupDetails() {
           {groupData.memberCount < groupData.maxMembers && (
             <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
               <CardContent className="py-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                       <Share2 className="w-5 h-5 text-primary-foreground" />
                     </div>
                     <div>
@@ -362,6 +365,7 @@ export default function GroupDetails() {
                   <Button 
                     onClick={handleShareInvite}
                     size="sm"
+                    className="w-full sm:w-auto"
                     data-testid="button-share-invite-inline"
                   >
                     <Share2 className="w-4 h-4 mr-2" />
@@ -553,17 +557,17 @@ export default function GroupDetails() {
                     return (
                     <div 
                       key={memberId} 
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors gap-2"
                       data-testid={`member-${memberId}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <Avatar>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="flex-shrink-0">
                           <AvatarFallback>
                             {firstName?.[0]}{lastName?.[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
                             {firstName} {lastName}
                             {isAdmin && (
                               <Badge variant="outline" className="ml-2">Creator</Badge>
@@ -577,11 +581,14 @@ export default function GroupDetails() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="text-right hidden sm:block">
                           <p className="text-sm text-muted-foreground">Payout Order</p>
                           <p className="font-semibold">#{memberPayoutOrder}</p>
                         </div>
+                        <span className="text-xs font-semibold text-muted-foreground sm:hidden">
+                          #{memberPayoutOrder}
+                        </span>
                         {/* Rate Member Button - Only show for other members (not yourself) */}
                         {memberId !== user?.id && (
                           <Button
@@ -591,8 +598,8 @@ export default function GroupDetails() {
                             className="text-primary hover:text-primary/80"
                             title="Rate this member"
                           >
-                            <Star className="w-4 h-4 mr-1" />
-                            Rate
+                            <Star className="w-4 h-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Rate</span>
                           </Button>
                         )}
                       </div>

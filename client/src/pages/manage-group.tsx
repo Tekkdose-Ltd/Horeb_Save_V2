@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getUserGroups } from "@/lib/queryClient";
-import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -300,23 +300,26 @@ export default function ManageGroup() {
 
   if (isLoading || groupLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        </main>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar className="w-64" />
+        <div className="flex-1 min-w-0 pt-14 lg:pt-0">
+          <main className="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
 
   if (!displayGroup || !user || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
+      <div className="flex min-h-screen bg-background">
+        <Sidebar className="w-64" />
+        <div className="flex-1 min-w-0 pt-14 lg:pt-0">
+          <main className="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="text-center py-12">
             <h2 className="text-2xl font-semibold mb-4">
               {!displayGroup ? "Group Not Found" : "Unauthorized"}
             </h2>
@@ -330,7 +333,8 @@ export default function ManageGroup() {
               Back to Groups
             </Button>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
     );
   }
@@ -353,9 +357,10 @@ export default function ManageGroup() {
   const allMembersJoined = maxMembers > 0 && displayGroup.memberCount >= maxMembers;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar className="w-64" />
+      <div className="flex-1 min-w-0 pt-14 lg:pt-0">
+      <main className="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="mb-6">
           <Button 
             variant="ghost" 
@@ -390,18 +395,20 @@ export default function ManageGroup() {
                 <form onSubmit={handleInvite} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="invite-email">Email Address</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Input
                         id="invite-email"
                         type="email"
                         placeholder="friend@example.com"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
+                        className="flex-1"
                         data-testid="input-invite-email"
                       />
                       <Button 
                         type="submit"
                         disabled={inviteMutation.isPending}
+                        className="w-full sm:w-auto"
                         data-testid="button-send-invite"
                       >
                         <Send className="w-4 h-4 mr-2" />
@@ -489,10 +496,10 @@ export default function ManageGroup() {
                     return (
                       <div 
                         key={memberUserId}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg hover:bg-muted/50 gap-2"
                       >
-                        <div className="flex-1">
-                          <p className="font-medium">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
                             {firstName} {lastName}
                             {isMemberAdmin && (
                               <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">
@@ -505,10 +512,10 @@ export default function ManageGroup() {
                               </span>
                             )}
                           </p>
-                          <p className="text-sm text-muted-foreground">{email}</p>
+                          <p className="text-sm text-muted-foreground truncate">{email}</p>
                         </div>
                         {!isCurrentUser && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-shrink-0">
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
@@ -615,7 +622,7 @@ export default function ManageGroup() {
             </CardHeader>
             <CardContent className="space-y-3">
               {/* Toggle Visibility */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-muted/30 gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-muted-foreground">Group Visibility</p>
@@ -631,7 +638,7 @@ export default function ManageGroup() {
                 <Button
                   variant="outline"
                   disabled={true}
-                  className="opacity-50 cursor-not-allowed"
+                  className="opacity-50 cursor-not-allowed w-full sm:w-auto flex-shrink-0"
                 >
                   {displayGroup.is_public || displayGroup.isPublic ? (
                     <>
@@ -649,7 +656,7 @@ export default function ManageGroup() {
 
               {/* Close/Reactivate Group */}
               {displayGroup.status === 'active' && (
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30 opacity-60">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg bg-muted/30 opacity-60 gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium text-muted-foreground">Close Group</p>
@@ -661,7 +668,7 @@ export default function ManageGroup() {
                   </div>
                   <Button 
                     variant="outline" 
-                    className="cursor-not-allowed"
+                    className="cursor-not-allowed w-full sm:w-auto flex-shrink-0"
                     disabled={true}
                   >
                     <Lock className="w-4 h-4 mr-2" />
@@ -671,7 +678,7 @@ export default function ManageGroup() {
               )}
 
               {displayGroup.status === 'closed' && (
-                <div className="flex items-center justify-between p-4 border border-green-200 bg-green-50/50 rounded-lg opacity-60">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-green-200 bg-green-50/50 rounded-lg opacity-60 gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium text-green-900">Reactivate Group</p>
@@ -683,7 +690,7 @@ export default function ManageGroup() {
                   </div>
                   <Button 
                     variant="outline" 
-                    className="border-green-600 text-green-900 cursor-not-allowed"
+                    className="border-green-600 text-green-900 cursor-not-allowed w-full sm:w-auto flex-shrink-0"
                     disabled={true}
                   >
                     <Unlock className="w-4 h-4 mr-2" />
@@ -848,6 +855,7 @@ export default function ManageGroup() {
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 }
