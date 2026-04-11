@@ -162,25 +162,19 @@ axiosInstance.interceptors.response.use(
         if (isDev) {
           console.warn('🔒 Authentication error - Logging out user');
         }
-        const errorMessage = error.response.data?.message || 'Your session has expired. Please login again.';
         
         // Clear auth data
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
         
-        // Show alert
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          alert(errorMessage);
-        }
-        
-        // Redirect to login after a short delay
+        // Redirect to login after a short delay (no alert — just silently redirect)
         setTimeout(() => {
           if (window.location.pathname !== '/login' && 
               window.location.pathname !== '/auth' && 
               window.location.pathname !== '/' &&
               window.location.pathname !== '/register' &&
               window.location.pathname !== '/onboarding') {
-            window.location.href = '/login';
+            window.location.href = '/auth';
           }
         }, 500);
         
@@ -190,25 +184,19 @@ axiosInstance.interceptors.response.use(
         if (isDev) {
           console.warn('🔒 Access forbidden - Logging out user');
         }
-        const errorMessage = error.response.data?.message || 'Access denied. Please login again.';
         
         // Clear auth data
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
         
-        // Show alert
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          alert(errorMessage);
-        }
-        
-        // Redirect to login
+        // Redirect silently — no alert
         setTimeout(() => {
           if (window.location.pathname !== '/login' && 
               window.location.pathname !== '/auth' && 
               window.location.pathname !== '/' &&
               window.location.pathname !== '/register' &&
               window.location.pathname !== '/onboarding') {
-            window.location.href = '/login';
+            window.location.href = '/auth';
           }
         }, 500);
       }
