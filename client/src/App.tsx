@@ -26,6 +26,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import PaymentPolicy from "@/pages/payment-policy";
 import GroupParticipationPolicy from "@/pages/group-participation-policy";
+import AccountStatus from "@/pages/account-status";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -54,6 +55,7 @@ function Router() {
     '/privacy-policy',
     '/payment-policy',
     '/group-participation-policy',
+    '/account-status',
   ];
 
   // Redirect to onboarding if profile is incomplete (only when authenticated)
@@ -100,6 +102,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/payment-policy" component={PaymentPolicy} />
       <Route path="/group-participation-policy" component={GroupParticipationPolicy} />
+      <Route path="/account-status" component={AccountStatus} />
       <Route component={NotFound} />
     </Switch>
   );
