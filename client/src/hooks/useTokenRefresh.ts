@@ -3,6 +3,8 @@ import { refreshToken } from '@/lib/queryClient';
 
 // Token refresh configuration
 const TOKEN_REFRESH_INTERVAL = 15 * 60 * 1000; // Refresh every 15 minutes
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // Log out after 30 minutes of inactivity
+const INACTIVITY_WARNING_TIME = 25 * 60 * 1000; // Warn at 25 minutes (5 min before logout)
 const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
 
 /**
@@ -12,11 +14,43 @@ const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'
 export function useTokenRefresh() {
   const lastActivityRef = useRef<number>(Date.now());
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef<boolean>(false);
 
   // Update last activity timestamp
   const updateActivity = () => {
     lastActivityRef.current = Date.now();
+    
+    // Clear existing timers
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    if (warningTimerRef.current) {
+      clearTimeout(warningTimerRef.current);
+    }
+    
+    // Set warning timer (5 minutes before logout)
+    warningTimerRef.current = setTimeout(() => {
+      console.log('⚠️ Inactivity warning - 5 minutes until logout');
+      
+      // Dispatch custom event for UI to show warning toast
+      window.dispatchEvent(new CustomEvent('inactivity-warning', {
+        detail: { minutesRemaining: 5 }
+      }));
+    }, INACTIVITY_WARNING_TIME);
+    
+    // Set inactivity logout timer
+    inactivityTimerRef.current = setTimeout(() => {
+      console.log('⏱️ Inactivity timeout reached - logging out user');
+      
+      // Clear auth data
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      
+      // Redirect to login
+      window.location.href = '/auth';
+    }, INACTIVITY_TIMEOUT);
   };
 
   // Perform token refresh
@@ -102,6 +136,9 @@ export function useTokenRefresh() {
       window.addEventListener(event, updateActivity);
     });
 
+    // Initialize the inactivity timer
+    updateActivity();
+
     // Set up periodic token refresh
     const startRefreshTimer = () => {
       refreshTimerRef.current = setInterval(async () => {
@@ -130,6 +167,18 @@ export function useTokenRefresh() {
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
         refreshTimerRef.current = null;
+      }
+
+      // Clear inactivity timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+
+      // Clear warning timer
+      if (warningTimerRef.current) {
+        clearTimeout(warningTimerRef.current);
+        warningTimerRef.current = null;
       }
 
       console.log('🔐 Token auto-refresh deactivated');

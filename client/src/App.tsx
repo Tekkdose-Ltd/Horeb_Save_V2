@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TokenRefreshIndicator } from "@/components/TokenRefreshIndicator";
+import { InactivityWarning } from "@/components/InactivityWarning";
 import { useAuth } from "@/hooks/useAuth";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 import { useEffect } from "react";
@@ -115,6 +116,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <TokenRefreshIndicator />
+          <InactivityWarning />
           <Router />
         </TooltipProvider>
       </QueryClientProvider>
