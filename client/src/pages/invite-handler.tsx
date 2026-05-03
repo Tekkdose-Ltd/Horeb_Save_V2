@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
@@ -11,6 +12,7 @@ import { Loader2 } from "lucide-react";
  * It checks the user's authentication status and redirects accordingly:
  * 
  * - Unauthenticated users → Registration page with invite code preserved
+ *   Shows a toast informing them they need to sign up first
  * - Authenticated users → Group join page to directly join the group
  * 
  * Route: /invite/:code
@@ -19,7 +21,8 @@ import { Loader2 } from "lucide-react";
 export default function InviteHandler() {
   const [match, params] = useRoute("/invite/:code");
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { toast } = useToast();
   const inviteCode = match ? (params as { code: string }).code : null;
 
   useEffect(() => {
@@ -33,15 +36,29 @@ export default function InviteHandler() {
     }
 
     // Route based on authentication status
-    if (isAuthenticated) {
-      // User is logged in → Direct to group join page
+    if (isAuthenticated && user) {
+      // User is logged in → Verify they have an account and direct to join page
+      toast({
+        title: "Welcome back!",
+        description: `Hi ${user.firstName || 'there'}, you're being directed to join the group.`,
+      });
       setLocation(`/groups/join?code=${inviteCode}`);
     } else {
-      // User is not logged in → Redirect to registration with invite code
-      // The registration page will store this code and auto-join after registration
+      // User is not logged in → Store invite code and show toast
+      // Store the invite code for after login/registration
+      localStorage.setItem('pendingInvite', inviteCode);
+      
+      toast({
+        title: "Sign Up or Log In Required",
+        description: "You need to create an account or log in before you can join a group.",
+        variant: "default",
+        duration: 6000,
+      });
+      
+      // Redirect to registration with invite code (user can switch to login tab)
       setLocation(`/register?invite=${inviteCode}`);
     }
-  }, [isAuthenticated, isLoading, inviteCode, setLocation]);
+  }, [isAuthenticated, isLoading, inviteCode, user, setLocation, toast]);
 
   // Show loading state while checking authentication
   return (

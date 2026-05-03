@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, Users } from "lucide-react";
 import { HorebSaveLogo } from "@/components/HorebSaveLogo";
 import { useLocation, Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Login schema
 const loginSchema = z.object({
@@ -41,6 +41,13 @@ type RegisterData = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  const [hasPendingInvite, setHasPendingInvite] = useState(false);
+
+  // Check for pending invite on component mount
+  useEffect(() => {
+    const pendingInvite = localStorage.getItem('pendingInvite');
+    setHasPendingInvite(!!pendingInvite);
+  }, []);
 
   // Login form
   const loginForm = useForm<LoginData>({
@@ -99,8 +106,16 @@ export default function AuthPage() {
         // Also store in localStorage as backup
         localStorage.setItem('user_data', JSON.stringify(userWithProfile));
         
-        // Redirect based on profile completion
-        if (userWithProfile.profileCompleted) {
+        // Check if user came from an invite link
+        const pendingInvite = localStorage.getItem('pendingInvite');
+        
+        // Redirect based on profile completion and pending invites
+        if (pendingInvite) {
+          // Clear the stored invite code
+          localStorage.removeItem('pendingInvite');
+          // Redirect to group join page with invite code
+          setLocation(`/groups/join?code=${pendingInvite}`);
+        } else if (userWithProfile.profileCompleted) {
           setLocation("/dashboard");
         } else {
           setLocation("/onboarding");
@@ -152,6 +167,16 @@ export default function AuthPage() {
               Join your community in saving and growing together
             </CardDescription>
           </div>
+          
+          {/* Show invite notification if user has a pending invite */}
+          {hasPendingInvite && (
+            <Alert className="text-left">
+              <Users className="h-4 w-4" />
+              <AlertDescription>
+                You've been invited to join a group! Log in or create an account to continue.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs value="login">

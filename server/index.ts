@@ -19,8 +19,9 @@ app.use((req, res, next) => {
     // In production, only allow specific origins
     const allowedOrigins = [
       "https://horebsavebackend.onrender.com",
+      "https://horebsaves.co.uk",
+      "https://www.horebsaves.co.uk",
       process.env.FRONTEND_URL,
-      "https://your-app-name.netlify.app",
     ].filter(Boolean);
 
     if (origin && allowedOrigins.includes(origin)) {

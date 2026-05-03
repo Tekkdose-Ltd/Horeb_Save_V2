@@ -13,11 +13,11 @@ export function InactivityWarning() {
   useEffect(() => {
     const handleInactivityWarning = (event: Event) => {
       const customEvent = event as CustomEvent<{ minutesRemaining: number }>;
-      const minutes = customEvent.detail?.minutesRemaining || 5;
+      const minutes = customEvent.detail?.minutesRemaining || 1;
 
       toast({
         title: "⚠️ Inactivity Warning",
-        description: `You'll be logged out in ${minutes} minutes due to inactivity. Move your mouse or press a key to stay logged in.`,
+        description: `You'll be logged out in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} due to inactivity. Move your mouse or press a key to stay logged in.`,
         variant: "destructive",
         duration: 10000, // Show for 10 seconds
       });
