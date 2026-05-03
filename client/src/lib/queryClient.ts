@@ -399,6 +399,11 @@ export const getPublicGroups = async () => {
     return groups.map((group: any) => ({
       ...group,
       id: group._id || group.id,
+      // Map backend field names to frontend expected names
+      maxMembers: group.max_number_of_members || group.maxMembers || 0,
+      memberCount: group.members?.length || group.memberCount || 0,
+      contributionAmount: group.contribution_amount || group.contributionAmount || 0,
+      inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
     console.error('❌ Get public groups error:', {
@@ -444,6 +449,11 @@ export const getUserGroups = async () => {
     return groups.map((group: any) => ({
       ...group,
       id: group._id || group.id,
+      // Map backend field names to frontend expected names
+      maxMembers: group.max_number_of_members || group.maxMembers || 0,
+      memberCount: group.members?.length || group.memberCount || 0,
+      contributionAmount: group.contribution_amount || group.contributionAmount || 0,
+      inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
     console.error('❌ Get user groups error:', {
@@ -484,6 +494,11 @@ export const getUserActiveGroups = async () => {
     return groups.map((group: any) => ({
       ...group,
       id: group._id || group.id,
+      // Map backend field names to frontend expected names
+      maxMembers: group.max_number_of_members || group.maxMembers || 0,
+      memberCount: group.members?.length || group.memberCount || 0,
+      contributionAmount: group.contribution_amount || group.contributionAmount || 0,
+      inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
     console.error('❌ Get user active groups error:', {

@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TokenRefreshIndicator } from "@/components/TokenRefreshIndicator";
+import { InactivityWarning } from "@/components/InactivityWarning";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 import { useEffect } from "react";
@@ -78,6 +80,7 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public Routes - No authentication required */}
       <Route path="/" component={Landing} />
       <Route path="/auth/register" component={Onboarding} />
       <Route path="/auth/login" component={AuthPage} />
@@ -87,15 +90,6 @@ function Router() {
       <Route path="/register" component={Onboarding} />
       <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/onboarding" component={Onboarding} />
-      <Route path="/invite/:code" component={InviteHandler} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/groups" component={Groups} />
-      <Route path="/groups/join" component={JoinGroup} />
-      <Route path="/groups/:id/manage" component={ManageGroup} />
-      <Route path="/groups/:id" component={GroupDetails} />
-      <Route path="/transactions" component={Transactions} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/notifications" component={Notifications} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/privacy" component={PrivacyPolicy} />
@@ -103,6 +97,55 @@ function Router() {
       <Route path="/payment-policy" component={PaymentPolicy} />
       <Route path="/group-participation-policy" component={GroupParticipationPolicy} />
       <Route path="/account-status" component={AccountStatus} />
+      
+      {/* Protected Routes - Authentication required */}
+      <Route path="/invite/:code">
+        <ProtectedRoute>
+          <InviteHandler />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/groups">
+        <ProtectedRoute>
+          <Groups />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/groups/join">
+        <ProtectedRoute>
+          <JoinGroup />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/groups/:id/manage">
+        <ProtectedRoute>
+          <ManageGroup />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/groups/:id">
+        <ProtectedRoute>
+          <GroupDetails />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/transactions">
+        <ProtectedRoute>
+          <Transactions />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/notifications">
+        <ProtectedRoute>
+          <Notifications />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* 404 Not Found */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -115,6 +158,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <TokenRefreshIndicator />
+          <InactivityWarning />
           <Router />
         </TooltipProvider>
       </QueryClientProvider>

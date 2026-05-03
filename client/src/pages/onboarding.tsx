@@ -341,7 +341,7 @@ export default function Onboarding() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <Shield className="w-8 h-8 text-primary" />
+            <HorebSaveLogo className="w-10 h-10" />
           </div>
           <h1 className="text-3xl font-bold mb-2" data-testid="text-onboarding-title">
             Create Your Account
