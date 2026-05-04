@@ -66,21 +66,8 @@ export function LinkBankAccountModal({
       return response.json();
     },
     onSuccess: (response) => {
-      // Debug logging
-      console.log("📝 Link Bank Account Response:", response);
-      console.log("🔗 Response structure:", {
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : [],
-        topLevelKeys: Object.keys(response),
-        hasUrl: !!response.url,
-        hasDataUrl: !!response.data?.url,
-        hasDataRedirectURL: !!response.data?.redirectURL
-      });
-      
       // Extract URL from nested data object - check multiple possible locations
       const url = response.data?.redirectURL || response.data?.url || response.redirectURL || response.url;
-      
-      console.log("🔗 Extracted URL:", url);
       
       if (url) {
         toast({
@@ -96,7 +83,6 @@ export function LinkBankAccountModal({
         
         onClose();
       } else {
-        console.error("❌ No URL found in response. Full response:", response);
         throw new Error("No account link URL received from server");
       }
     },

@@ -78,10 +78,8 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
         contribution_amount: Number(data.contributionAmount), // Ensure it's a number
       };
       
-      console.log('📤 Creating group with payload:', JSON.stringify(payload, null, 2));
       const response = await apiRequest("POST", "/groups", payload);
       const result = await response.json();
-      console.log('✅ Create group response:', result);
       return result;
     },
     onSuccess: (group) => {
@@ -98,10 +96,6 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       onClose();
     },
     onError: (error: any) => {
-      console.error('❌ Create group error:', error);
-      console.error('❌ Error response:', error.response);
-      console.error('❌ Error data:', error.response?.data);
-      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",

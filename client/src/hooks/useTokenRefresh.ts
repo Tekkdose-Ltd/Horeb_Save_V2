@@ -26,26 +26,18 @@ export function useTokenRefresh() {
     // Don't run on login/register pages
     const publicPaths = ['/login', '/register', '/auth', '/onboarding', '/verify-email', '/', '/terms-of-service', '/privacy-policy'];
     if (publicPaths.includes(window.location.pathname)) {
-      console.log('🔓 Public page - token refresh and inactivity tracking disabled');
       return;
     }
 
     // Check if user is authenticated
     const token = localStorage.getItem('auth_token');
     if (!token) {
-      console.log('🔓 No auth token - token refresh and inactivity tracking disabled');
       return;
     }
-
-    console.log('🔐 Token auto-refresh and inactivity tracking activated');
-    console.log(`⏱️ Inactivity timeout: ${INACTIVITY_TIMEOUT / 1000} seconds`);
-    console.log(`⚠️ Inactivity warning: ${INACTIVITY_WARNING_TIME / 1000} seconds`);
 
     // Logout function
     const handleLogout = () => {
       if (!isMountedRef.current) return;
-      
-      console.log('⏱️ Inactivity timeout reached - logging out user');
       
       // Clear all timers
       if (inactivityTimerRef.current) {
@@ -77,8 +69,6 @@ export function useTokenRefresh() {
       const now = Date.now();
       lastActivityRef.current = now;
       
-      console.log('👆 User activity detected, resetting inactivity timers');
-      
       // Clear existing timers
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
@@ -92,8 +82,6 @@ export function useTokenRefresh() {
       // Set warning timer (1 minute before logout)
       warningTimerRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
-        
-        console.log('⚠️ Inactivity warning - 1 minute until logout');
         
         // Dispatch custom event for UI to show warning toast
         window.dispatchEvent(new CustomEvent('inactivity-warning', {
@@ -113,7 +101,6 @@ export function useTokenRefresh() {
       
       // Prevent multiple simultaneous refresh attempts
       if (isRefreshingRef.current) {
-        console.log('🔄 Token refresh already in progress, skipping...');
         return;
       }
 
@@ -121,13 +108,11 @@ export function useTokenRefresh() {
       const userData = localStorage.getItem('user_data');
 
       if (!currentToken || !userData) {
-        console.log('⚠️ No token or user data found, skipping refresh');
         return;
       }
 
       try {
         isRefreshingRef.current = true;
-        console.log('🔄 Refreshing authentication token...');
         
         // Dispatch event for UI indicator
         window.dispatchEvent(new CustomEvent('token-refresh-start'));
@@ -153,7 +138,6 @@ export function useTokenRefresh() {
         if (newToken) {
           // Update stored token
           localStorage.setItem('auth_token', newToken);
-          console.log('✅ Token refreshed successfully');
           
           // Dispatch success event
           window.dispatchEvent(new CustomEvent('token-refresh-end'));
@@ -187,15 +171,12 @@ export function useTokenRefresh() {
       // Only refresh if user has been active recently (within inactivity threshold)
       if (timeSinceActivity < INACTIVITY_TIMEOUT) {
         await performTokenRefresh();
-      } else {
-        console.log('⏸️ User inactive, skipping token refresh');
       }
     }, TOKEN_REFRESH_INTERVAL);
 
     // Cleanup function
     return () => {
       isMountedRef.current = false;
-      console.log('🔐 Token auto-refresh and inactivity tracking deactivated');
       
       // Remove activity listeners
       ACTIVITY_EVENTS.forEach((event) => {

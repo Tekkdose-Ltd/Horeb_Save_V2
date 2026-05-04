@@ -124,7 +124,6 @@ function ContributeForm({
         await contributeMutation.mutateAsync(paymentMethod.id);
       }
     } catch (err) {
-      console.error("Payment error:", err);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -198,10 +197,6 @@ export function ContributeModal({
   contributionAmount,
   groupName,
 }: ContributeModalProps) {
-  if (!stripePromise) {
-    console.warn("Stripe publishable key not configured");
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
