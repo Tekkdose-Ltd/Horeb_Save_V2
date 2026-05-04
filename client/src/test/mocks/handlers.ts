@@ -8,6 +8,23 @@ import { http, HttpResponse } from "msw";
 
 // ── Auth handlers ─────────────────────────────────────────────────────────────
 const authHandlers = [
+  // Successful registration
+  http.post(/\/auth\/register$/, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        user: {
+          id: "user-new",
+          email: "newuser@example.com",
+          firstName: "New",
+          lastName: "User",
+          profileCompleted: true,
+          emailVerified: false,
+        },
+      },
+    });
+  }),
+
   // Successful login — matches both local proxy and direct render URL
   http.post(/\/auth\/login$/, () => {
     return HttpResponse.json({

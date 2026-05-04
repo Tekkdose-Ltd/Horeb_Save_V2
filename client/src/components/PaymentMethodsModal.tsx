@@ -75,7 +75,6 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
     });
 
     if (error) {
-      console.error("Setup Intent Error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to add payment method",
@@ -88,14 +87,12 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
       });
       onSuccess();
     } else {
-      console.log("Setup Intent result:", setupIntent);
       toast({
         title: "Info",
         description: "Payment setup is pending confirmation.",
       });
     }
     } catch (err) {
-      console.error("Unexpected setup error:", err);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -160,7 +157,6 @@ export function PaymentMethodsModal({
     queryKey: ["/payment-methods"],
     enabled: isOpen,
     retry: (failureCount, error: any) => {
-      console.log("Payment methods query error:", error);
       if (error?.status === 401 || error?.message?.includes("Unauthorized")) {
         return false;
       }
@@ -171,29 +167,16 @@ export function PaymentMethodsModal({
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
-  // Debug logging - moved after useQuery hook
-  useEffect(() => {
-    if (isOpen) {
-      console.log("Payment methods modal opened");
-      console.log("Loading state:", isLoading);
-      console.log("Error state:", error);
-      console.log("Payment methods:", paymentMethods);
-    }
-  }, [isOpen, isLoading, error, paymentMethods]);
-
   const createSetupIntentMutation = useMutation({
     mutationFn: async () => {
-      console.log("Creating setup intent...");
-      const response = await apiRequest("POScreate-setup-intent");
+      const response = await apiRequest("POST", "/payment/create-setup-intent");
       return response.json();
     },
     onSuccess: (data) => {
-      console.log("Setup intent created:", data);
       setClientSecret(data.clientSecret);
       setShowAddForm(true);
     },
     onError: (error: any) => {
-      console.error("Failed to create setup intent:", error);
       const message =
         error?.status === 401
           ? "Please log in to add payment methods."
@@ -276,7 +259,6 @@ export function PaymentMethodsModal({
                     <Button
                       variant="outline"
                       onClick={() => {
-                        console.log("Manually retrying payment methods fetch");
                         refetch();
                       }}
                       className="mb-4"

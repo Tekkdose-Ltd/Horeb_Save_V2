@@ -36,19 +36,6 @@ axiosInstance.interceptors.request.use(
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      if (isDev) {
-        console.log(
-          '🔑 Request with token:',
-          config.method?.toUpperCase(),
-          config.url,
-          '| Token:',
-          token.substring(0, 20) + '...'
-        );
-      }
-    } else {
-      if (isDev) {
-        console.warn('⚠️ No auth token found for request:', config.method?.toUpperCase(), config.url);
-      }
     }
     
     return config;
@@ -116,9 +103,6 @@ axiosInstance.interceptors.response.use(
 
         if (token && userData) {
           try {
-            if (isDev) {
-              console.log('🔄 Attempting to refresh expired token...');
-            }
             const parsedUserData = JSON.parse(userData);
             const userId = parsedUserData._id || parsedUserData.id || parsedUserData.user_id;
 
@@ -134,9 +118,6 @@ axiosInstance.interceptors.response.use(
               if (newToken) {
                 // Update stored token
                 localStorage.setItem('auth_token', newToken);
-                if (isDev) {
-                  console.log('✅ Token refreshed successfully, retrying original request');
-                }
 
                 // Update auth header for original request
                 originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
@@ -150,7 +131,6 @@ axiosInstance.interceptors.response.use(
               }
             }
           } catch (refreshError: any) {
-            console.error('❌ Token refresh failed:', refreshError.message);
             processQueue(refreshError, null);
             isRefreshing = false;
             
@@ -159,9 +139,6 @@ axiosInstance.interceptors.response.use(
         }
 
         // If refresh failed or no token, proceed with logout
-        if (isDev) {
-          console.warn('🔒 Authentication error - Logging out user');
-        }
         
         // Clear auth data
         localStorage.removeItem('auth_token');
@@ -181,9 +158,6 @@ axiosInstance.interceptors.response.use(
         isRefreshing = false;
       } else if (error.response.status === 403) {
         // 403 Forbidden - don't try to refresh, just logout
-        if (isDev) {
-          console.warn('🔒 Access forbidden - Logging out user');
-        }
         
         // Clear auth data
         localStorage.removeItem('auth_token');
@@ -389,9 +363,6 @@ export const getPublicGroups = async () => {
     } else if (Array.isArray(response.data)) {
       groups = response.data;
     } else {
-      if (isDev) {
-        console.warn('⚠️ Unexpected response structure, returning empty array');
-      }
       return [];
     }
     
@@ -406,14 +377,6 @@ export const getPublicGroups = async () => {
       inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
-    console.error('❌ Get public groups error:', {
-      url: axiosInstance.defaults.baseURL + '/groups/public',
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
     // Return empty array instead of throwing to prevent UI break
     return [];
   }
@@ -439,9 +402,6 @@ export const getUserGroups = async () => {
     } else if (Array.isArray(response.data)) {
       groups = response.data;
     } else {
-      if (isDev) {
-        console.warn('⚠️ Unexpected response structure, returning empty array');
-      }
       return [];
     }
     
@@ -456,14 +416,6 @@ export const getUserGroups = async () => {
       inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
-    console.error('❌ Get user groups error:', {
-      url: axiosInstance.defaults.baseURL + '/groups/my',
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
     // Return empty array instead of throwing to prevent UI break
     return [];
   }
@@ -471,22 +423,16 @@ export const getUserGroups = async () => {
 
 // Get user's active groups only
 export const getUserActiveGroups = async () => {
-  console.log('📍 Fetching user active groups from:', axiosInstance.defaults.baseURL + '/groups/my-active-groups');
   try {
     const response = await axiosInstance.get('/groups/my-active-groups');
-    console.log('✅ User active groups raw response:', response);
-    console.log('✅ User active groups data:', response.data);
     
     // Handle different response structures
     let groups = [];
     if (response.data?.data && Array.isArray(response.data.data)) {
-      console.log('✅ Extracted data array:', response.data.data);
       groups = response.data.data;
     } else if (Array.isArray(response.data)) {
-      console.log('✅ Direct array:', response.data);
       groups = response.data;
     } else {
-      console.warn('⚠️ Unexpected response structure, returning empty array');
       return [];
     }
     
@@ -501,14 +447,6 @@ export const getUserActiveGroups = async () => {
       inviteCode: group.invite_code || group.inviteCode,
     }));
   } catch (error: any) {
-    console.error('❌ Get user active groups error:', {
-      url: axiosInstance.defaults.baseURL + '/groups/my-active-groups',
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
     // Return empty array instead of throwing to prevent UI break
     return [];
   }
@@ -516,10 +454,8 @@ export const getUserActiveGroups = async () => {
 
 // Get group by ID with full details (members, payout schedule, etc.)
 export const getGroupById = async (groupId: string) => {
-  console.log('📍 Fetching group details for:', groupId);
   try {
     const response = await axiosInstance.get(`/groups/${groupId}`);
-    console.log('✅ Group details response:', response.data);
     
     // Extract the group data from the response
     const groupData = response.data?.data || response.data;
@@ -530,14 +466,6 @@ export const getGroupById = async (groupId: string) => {
       id: groupData._id || groupData.id,
     };
   } catch (error: any) {
-    console.error('❌ Get group details error:', {
-      groupId,
-      url: axiosInstance.defaults.baseURL + `/groups/${groupId}`,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      data: error.response?.data
-    });
     throw error;
   }
 };

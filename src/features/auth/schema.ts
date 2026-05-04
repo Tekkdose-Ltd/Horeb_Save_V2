@@ -1,7 +1,8 @@
 import zod, { z } from 'zod'
 
 export const CreateNewAccountValidationSchema = zod.object({
-    email:zod.email().nonempty(),
+    email:zod.string().email().nonempty(),
+    surety_email:zod.string().email().nonempty(),
     password:zod.string().nonempty(),
     first_name:zod.string().min(2).max(30).nonempty(),
     last_name:zod.string().min(2).max(30).nonempty(),
@@ -18,13 +19,10 @@ export const CreateNewAccountValidationSchema = zod.object({
     trust_score:zod.number().positive().optional(),
     total_groups_completed:zod.number().optional(),
     on_time_payment_rate:zod.number().optional()
-    
-
-
 })
 
 export const LoginAccountValidationSchema = zod.object({
-    email:zod.email().nonempty(),
+    email:zod.string().email().nonempty(),
     password:zod.string().nonempty()
 })
 

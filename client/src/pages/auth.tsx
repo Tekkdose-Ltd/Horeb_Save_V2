@@ -87,8 +87,6 @@ export default function AuthPage() {
       
       if (token) {
         localStorage.setItem('auth_token', token);
-      } else {
-        console.warn('⚠️ No token found in login response');
       }
       
       // Store user data from login response - this is the source of truth
@@ -121,13 +119,12 @@ export default function AuthPage() {
           setLocation("/onboarding");
         }
       } else {
-        console.warn('⚠️ No user data found in login response');
         // Default to dashboard if no user data
         setLocation("/dashboard");
       }
     },
     onError: (error: any) => {
-      console.error('Login failed:', error);
+      // Error handled by UI
     },
   });
 

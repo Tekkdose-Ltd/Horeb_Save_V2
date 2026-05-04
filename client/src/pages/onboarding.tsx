@@ -139,7 +139,6 @@ export default function Onboarding() {
             profileImageUrl = uploadResult.imageUrl || "";
           }
         } catch (uploadError) {
-          console.warn('Image upload failed, continuing with registration:', uploadError);
           // Continue with registration even if image upload fails
         }
       }
@@ -181,17 +180,13 @@ export default function Onboarding() {
         city: data.city,
         postalCode: data.postcode,
         country: data.country,
+        profile_pic: profileImageUrl,
         profile_image_url: profileImageUrl,
         profile_completed: profileCompleted,
       };
       
-      try {
-        const response = await apiRequest("POST", "/auth/register", backendData);
-        const result = await response.json();
-        return result;
-      } catch (error: any) {
-        throw error;
-      }
+      const response = await apiRequest("POST", "auth/register", backendData);
+      return response.json();
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
@@ -221,8 +216,6 @@ export default function Onboarding() {
       form.reset();
     },
     onError: (error: any) => {
-      console.error("Registration error:", error);
-      
       // Check for specific error messages
       let errorMessage = "Failed to create account. Please try again.";
       

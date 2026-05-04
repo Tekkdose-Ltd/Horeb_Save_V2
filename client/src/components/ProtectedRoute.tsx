@@ -20,7 +20,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     // If not loading and not authenticated, redirect to login
     if (!isLoading && !isAuthenticated) {
-      console.log('🚫 Access denied - redirecting to login');
       setLocation("/auth");
     }
   }, [isLoading, isAuthenticated, setLocation]);

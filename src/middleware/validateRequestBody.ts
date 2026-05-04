@@ -10,8 +10,7 @@ export default  <T extends z.ZodType>(shema:T) =>{
     try{
 
          if(req.body.date_of_birth){
-            console.log(req.body.date_of_birth)
-            const datetime = z.iso.datetime();
+            const datetime = z.string().datetime();
             req.body = shema.parse({
                 ...req.body,
           date_of_birth:datetime.parse(req.body.date_of_birth)

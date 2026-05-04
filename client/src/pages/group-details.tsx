@@ -77,13 +77,6 @@ export default function GroupDetails() {
     });
   };
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Route match:', match);
-    console.log('🔍 Route params:', params);
-    console.log('🔍 Group ID:', groupId);
-  }, [match, params, groupId]);
-
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -107,16 +100,6 @@ export default function GroupDetails() {
   const group = groups?.find(g => (g._id || g.id) === groupId);
   const groupLoading = groupsLoading;
   const groupError = groupsError;
-  
-  // Log for debugging
-  useEffect(() => {
-    console.log('🔍 All groups:', groups);
-    console.log('🔍 Looking for groupId:', groupId);
-    console.log('🔍 Found group:', group);
-    if (groupError) {
-      console.error('Group loading error:', groupError);
-    }
-  }, [groups, group, groupId, groupError]);
 
   // Extract group data - handle both snake_case and camelCase
   const groupData = group ? {
