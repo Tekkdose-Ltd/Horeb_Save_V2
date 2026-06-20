@@ -19,8 +19,8 @@ app.use((req, res, next) => {
     // In production, only allow specific origins
     const allowedOrigins = [
       "https://horebsavebackend.onrender.com",
-      "https://horebsaves.co.uk",
-      "https://www.horebsaves.co.uk",
+      "https://horebsave.co.uk",
+      "https://www.horebsave.co.uk",
       process.env.FRONTEND_URL,
     ].filter(Boolean);
 
