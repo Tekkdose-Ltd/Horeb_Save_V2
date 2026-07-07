@@ -1,4 +1,3 @@
-import { jwt } from "zod"
 import SERVER_STATUS from "../../../util/interface/CODE"
 import { ResponseBodyProps } from "../../../util/interface/ResponseBodyProps"
 import TypedRequest from "../../../util/interface/TypedRequest"
@@ -147,7 +146,7 @@ export const joinGroupByInviteCode = async (req:TypedRequest<{invite_code:string
             }
 
             //check if you are already  member
-             if(members.filter(member=>member.id === user)){
+             if(members.some(member=>String(member.id) === String(user?._id))){
               res.status(SERVER_STATUS.BAD_REQUEST).json({
         title:'Join Group By Invitation Message',
         status:SERVER_STATUS.BAD_REQUEST,
@@ -161,7 +160,7 @@ export const joinGroupByInviteCode = async (req:TypedRequest<{invite_code:string
 
 
           members.push({
-            id:user,
+            id:user?._id,
             isAdmin:false
           })
             group = await newGroupModel.findOneAndUpdate({_id:group._id},{members})

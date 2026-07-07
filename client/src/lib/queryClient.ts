@@ -384,7 +384,7 @@ export const getPublicGroups = async () => {
 
 // Join group with invitation code
 export const joinGroup = async (data: {
-  invitation_code: string;
+  invite_code: string;
 }) => {
   const response = await axiosInstance.post('/groups/join', data);
   return response.data;

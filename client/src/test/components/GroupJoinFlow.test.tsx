@@ -197,7 +197,7 @@ describe("Group Joining Flow - Payment Method Verification", () => {
       // Should call the join API (not show modal)
       await waitFor(() => {
         expect(mockApiRequest).toHaveBeenCalledWith("POST", "/groups/join", {
-          invitation_code: "ABC123",
+          invite_code: "ABC123",
         });
       });
 
@@ -260,7 +260,7 @@ describe("Group Joining Flow - Payment Method Verification", () => {
       // Should call join API
       await waitFor(() => {
         expect(mockApiRequest).toHaveBeenCalledWith("POST", "/groups/join", {
-          invitation_code: "XYZ789",
+          invite_code: "XYZ789",
         });
       });
     });
