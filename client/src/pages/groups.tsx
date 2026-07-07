@@ -7,10 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateGroupModal } from "@/components/CreateGroupModal";
 import { BankDetailsModal } from "@/components/BankDetailsModal";
 import { GroupCard } from "@/components/GroupCard";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, CheckCircle2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useBankDetailsRequired } from "@/hooks/useBankDetailsRequired";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest, queryClient, getUserGroups, getPublicGroups } from "@/lib/queryClient";
 
 export default function Groups() {
@@ -19,6 +21,7 @@ export default function Groups() {
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   const [pendingJoinGroupId, setPendingJoinGroupId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isFullyVerified } = useAuth();
   
   const {
     showBankDetailsModal,
@@ -121,6 +124,32 @@ export default function Groups() {
       {/* Main Content */}
       <div className="flex-1 min-w-0 pt-14 lg:pt-0">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Verification Status Banner */}
+          {!isFullyVerified && (
+            <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <span className="font-semibold">Payment method required:</span> Link a card or bank account to join groups and make contributions.{" "}
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-amber-700 dark:text-amber-300 underline font-semibold"
+                  onClick={() => setShowBankDetailsModal(true)}
+                >
+                  Link now
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isFullyVerified && (
+            <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                <span className="font-semibold">Account verified:</span> You're all set to join and create groups!
+              </AlertDescription>
+            </Alert>
+          )}
+
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2" data-testid="text-groups-title">
