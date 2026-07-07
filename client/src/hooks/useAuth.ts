@@ -54,7 +54,7 @@ export function useAuth() {
   }
 
   // Real API authentication - will be used when USE_MOCK_AUTH is false
-  const { data: user, isLoading, error } = useQuery<User>({
+  const { data: rawUser, isLoading, error } = useQuery<any>({
     queryKey: ["/auth/user"],
     retry: false,
     staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes (allows invalidation to work)
@@ -72,6 +72,33 @@ export function useAuth() {
       }
     },
   });
+
+  // Normalize user data:
+  // 1. The /auth/user endpoint wraps the user in a response envelope: {title, status, data: {...user}}
+  //    but login stores the user object directly — handle both shapes.
+  // 2. The backend uses snake_case (stripe_customer_id) while the frontend types
+  //    use camelCase (stripeCustomerId) — normalize so both work.
+  const unwrapped = rawUser?.data && (rawUser?.title || rawUser?.status || rawUser?.successful !== undefined)
+    ? rawUser.data
+    : rawUser;
+
+  const user: (User & Record<string, any>) | null = unwrapped
+    ? {
+        ...unwrapped,
+        // Normalize IDs (Mongo uses _id)
+        id: unwrapped.id || unwrapped._id,
+        // Normalize payment/bank fields to camelCase
+        stripeCustomerId: unwrapped.stripeCustomerId ?? unwrapped.stripe_customer_id ?? null,
+        bankAccountHolderName: unwrapped.bankAccountHolderName ?? unwrapped.bank_account_holder_name ?? null,
+        bankAccountNumber: unwrapped.bankAccountNumber ?? unwrapped.bank_account_number ?? null,
+        bankSortCode: unwrapped.bankSortCode ?? unwrapped.bank_sort_code ?? null,
+        bankDetailsVerified: unwrapped.bankDetailsVerified ?? unwrapped.bank_details_verified ?? false,
+        stripeAccountId: unwrapped.stripeAccountId ?? unwrapped.stripe_account_id ?? null,
+        profileCompleted: unwrapped.profileCompleted ?? unwrapped.profile_completed ?? false,
+        firstName: unwrapped.firstName ?? unwrapped.first_name ?? null,
+        lastName: unwrapped.lastName ?? unwrapped.last_name ?? null,
+      }
+    : null;
 
   // Check if we have user data in the query cache or localStorage
   const hasUser = !!user;
