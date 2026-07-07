@@ -59,7 +59,7 @@ export function useBankDetailsRequired() {
   };
 
   return {
-    hasBankDetails: hasBankDetails(),
+    hasBankDetails: hasBankDetails(), // Recompute on every render to get fresh user data
     showBankDetailsModal,
     setShowBankDetailsModal,
     requireBankDetails,
