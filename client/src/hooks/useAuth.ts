@@ -57,7 +57,7 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ["/auth/user"],
     retry: false,
-    staleTime: Infinity, // Never consider data stale
+    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes (allows invalidation to work)
     gcTime: Infinity, // Keep in cache forever
     refetchOnMount: false, // Don't refetch when component mounts
     refetchOnWindowFocus: false, // Don't refetch on window focus

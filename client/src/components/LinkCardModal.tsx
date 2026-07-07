@@ -211,9 +211,9 @@ export function LinkCardModal({
     },
   });
 
-  const handleCardSetupSuccess = () => {
-    // Invalidate user query to refresh stripeCustomerId
-    queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+  const handleCardSetupSuccess = async () => {
+    // Refetch user query to get updated stripeCustomerId
+    await queryClient.refetchQueries({ queryKey: ["/auth/user"] });
     
     toast({
       title: "Card Linked Successfully",
