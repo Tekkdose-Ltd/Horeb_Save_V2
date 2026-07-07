@@ -52,7 +52,7 @@ export default function Groups() {
         // Use invitation code endpoint if available
         const inviteCode = group.inviteCode || group.invite_code;
         return await apiRequest("POST", "/groups/join", { 
-          invitation_code: inviteCode 
+          invite_code: inviteCode 
         });
       } else {
         // Fallback to direct join by ID (may not be supported by backend)

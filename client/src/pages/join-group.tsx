@@ -52,7 +52,7 @@ export default function JoinGroup() {
   const joinGroupMutation = useMutation({
     mutationFn: async (code: string) => {
       const response = await apiRequest("POST", "/groups/join", { 
-        invitation_code: code 
+        invite_code: code 
       });
       return response.json();
     },
