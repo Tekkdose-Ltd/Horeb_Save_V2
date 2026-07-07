@@ -47,31 +47,16 @@ export default function GroupDetails() {
     const inviteUrl = `${baseUrl}/invite/${groupData.inviteCode}`;
     const inviteMessage = `Join my savings group "${groupData?.name}" on Horeb Save!\n\n🔗 Click here to join: ${inviteUrl}\n\nInvitation Code: ${groupData.inviteCode}`;
     
-    // Try to use Web Share API if available
-    if (navigator.share) {
-      navigator.share({
-        title: `Join ${groupData?.name}`,
-        text: inviteMessage,
-      }).catch((error) => {
-        // If share fails, fall back to clipboard
-        copyInviteLink(inviteUrl, inviteMessage);
-      });
-    } else {
-      // Fallback to clipboard copy
-      copyInviteLink(inviteUrl, inviteMessage);
-    }
-  };
-
-  const copyInviteLink = (url: string, message: string) => {
-    navigator.clipboard.writeText(message).then(() => {
+    // Copy to clipboard - simple and direct
+    navigator.clipboard.writeText(inviteMessage).then(() => {
       toast({
-        title: "Invite Link Copied!",
-        description: "Share this link with people you want to invite to your group.",
+        title: "Link Copied to Clipboard!",
+        description: "You can now share this link however you want.",
       });
     }).catch(() => {
       toast({
         title: "Copy Failed",
-        description: "Please manually share the link: " + url,
+        description: "Please manually share the link: " + inviteUrl,
         variant: "destructive",
       });
     });

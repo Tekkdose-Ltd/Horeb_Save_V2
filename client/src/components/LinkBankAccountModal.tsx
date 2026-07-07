@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -70,6 +70,9 @@ export function LinkBankAccountModal({
       const url = response.data?.redirectURL || response.data?.url || response.redirectURL || response.url;
       
       if (url) {
+        // Invalidate user query to refresh bank account details when they return
+        queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+        
         toast({
           title: "Opening Stripe Account Setup",
           description: "Please complete the setup in the new tab.",
