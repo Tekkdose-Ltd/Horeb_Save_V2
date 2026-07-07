@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -212,6 +212,9 @@ export function LinkCardModal({
   });
 
   const handleCardSetupSuccess = () => {
+    // Invalidate user query to refresh stripeCustomerId
+    queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+    
     toast({
       title: "Card Linked Successfully",
       description: "Your card has been securely linked to your account.",
