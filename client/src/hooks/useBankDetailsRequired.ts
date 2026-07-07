@@ -14,13 +14,19 @@ export function useBankDetailsRequired() {
   const hasBankDetails = () => {
     if (!user) return false;
     
-    // Check if user has completed bank details
-    return !!(
+    // Check if user has EITHER:
+    // 1) A Stripe Customer ID (payment method linked — card or bank for contributions)
+    // 2) OR verified bank details (bank account linked for payouts)
+    const hasPaymentMethod = !!(user.stripeCustomerId);
+    const hasBankAccount = !!(
       user.bankAccountHolderName &&
       user.bankAccountNumber &&
       user.bankSortCode &&
       user.bankDetailsVerified
     );
+
+    // User is considered verified if they have at least one payment method set up
+    return hasPaymentMethod || hasBankAccount;
   };
 
   /**

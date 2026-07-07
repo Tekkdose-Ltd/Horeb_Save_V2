@@ -28,6 +28,13 @@ const mockUser: User = {
   postcode: "SW1A 1AA",
   country: "United Kingdom",
   profileCompleted: true,
+  bankAccountHolderName: null,
+  bankAccountNumber: null,
+  bankSortCode: null,
+  bankName: null,
+  stripeAccountId: null,
+  bankDetailsVerified: false,
+  bankDetailsCompletedAt: null,
   stripeCustomerId: null,
   trustScore: "85.00",
   totalGroupsCompleted: 3,
@@ -83,10 +90,33 @@ export function useAuth() {
     window.location.href = "/";
   };
 
+  // Check if user has payment method linked (for contributions)
+  const hasPaymentMethod = () => {
+    return !!(user?.stripeCustomerId);
+  };
+
+  // Check if user has bank account linked (for payouts)
+  const hasBankAccount = () => {
+    return !!(
+      user?.bankAccountHolderName &&
+      user?.bankAccountNumber &&
+      user?.bankSortCode &&
+      user?.bankDetailsVerified
+    );
+  };
+
+  // Is user verified (either card or bank)?
+  const isFullyVerified = () => {
+    return hasPaymentMethod() || hasBankAccount();
+  };
+
   return {
     user: user || null,
     isLoading,
     isAuthenticated: hasUser,
     logout,
+    hasPaymentMethod: hasPaymentMethod(),
+    hasBankAccount: hasBankAccount(),
+    isFullyVerified: isFullyVerified(),
   };
 }
